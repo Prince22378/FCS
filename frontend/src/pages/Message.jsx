@@ -36,7 +36,7 @@ function Message() {
     if (!userId) return;
 
     try {
-      const response = await api.get(`/my-messages/${userId}/`);
+      const response = await api.get(`/api/my-messages/${userId}/`);
       setMessages(response.data);
     } catch (error) {
       console.error("Error fetching messages:", error);

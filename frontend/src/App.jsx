@@ -1,23 +1,23 @@
-import react from "react"
-import {BrowserRouter, Routes, Route, Navigate, useLocation} from "react-router-dom"
-import Login from './pages/Login';
-import Home from './pages/Home';
-import Register from './pages/Register';
-import NotFound from './pages/NotFound';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from "./components/Navbar";
-import Dashboard from "./pages/Dashboard";
-import MessageDetail from "./pages/MessageDetail";
+// src/App.jsx
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import Login from "./pages/Login.jsx";
+import Homepage from "./pages/Home.jsx";
+import Register from "./pages/Register.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Navbar from "./components/Navbar.jsx";
+import Inbox from "./pages/Inbox.jsx";
+import MessageDetail from "./pages/MessageDetail.jsx";
 
-
-function Logout(){
-  localStorage.clear()
-  return <Navigate to="/login"/>
+function Logout() {
+  localStorage.clear();
+  return <Navigate to="/login" />;
 }
 
-function RegisterAndLogout(){
-  localStorage.clear()
-  return <Register />
+function RegisterAndLogout() {
+  localStorage.clear();
+  return <Register />;
 }
 
 const NavbarWrapper = () => {
@@ -27,26 +27,24 @@ const NavbarWrapper = () => {
   return !hideNavbarOn.includes(location.pathname) ? <Navbar /> : null;
 };
 
-
 function App() {
-
   return (
     <BrowserRouter>
-    <NavbarWrapper/>
-    <Routes>
+      <NavbarWrapper />
+      <Routes>
         <Route 
           path="/" 
           element={
             <ProtectedRoute>
-              <Home />
+              <Homepage />
             </ProtectedRoute>
           } 
         />
         <Route 
-          path="/dashboard" 
+          path="/inbox" 
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Inbox />
             </ProtectedRoute>
           } 
         />
@@ -64,7 +62,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

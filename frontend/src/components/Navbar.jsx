@@ -23,7 +23,7 @@ const Navbar = () => {
         {/* Links - Desktop */}
         <ul className="hidden md:flex space-x-6">
           <li><Link to="/" className="text-white hover:underline">Home</Link></li>
-          <li><Link to="/about" className="text-white hover:underline">About</Link></li>
+          <li><Link to="/inbox" className="text-white hover:underline">Inbox</Link></li>
           <li><Link to="/logout" className="text-white hover:underline">Logout</Link></li>
         </ul>
       </div>
