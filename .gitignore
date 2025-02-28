@@ -1,0 +1,32 @@
+# Python-related files
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.env
+
+# Virtual environment
+venv/
+.env/
+.venv/
+Pipfile
+Pipfile.lock
+
+# Django migrations
+**/migrations/**
+
+# React-related files
+node_modules/
+build/
+dist/
+
+# Ignore package managers lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Editor / OS-specific files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
