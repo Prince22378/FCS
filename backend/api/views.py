@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.db.models import Q, Subquery, OuterRef
 from api.models import User, Profile, ChatMessage
 
 from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer
@@ -98,8 +99,7 @@ class SearchUser(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         username = self.kwargs['username']
         logged_in_user = self.request.user
-        users = Profile.objects.filter(Q(user__username__icontains=username) | Q(full_name__icontains=username) | Q(user__email__icontains=username) & 
-                                       ~Q(user=logged_in_user))
+        users = Profile.objects.filter(Q(user__username__icontains=username) | Q(full_name__icontains=username) | Q(user__email__icontains=username) )
 
         if not users.exists():
             return Response(

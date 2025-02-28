@@ -6,6 +6,9 @@ import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from "./components/Navbar";
+import Dashboard from "./pages/Dashboard";
+import MessageDetail from "./pages/MessageDetail";
+
 
 function Logout(){
   localStorage.clear()
@@ -36,6 +39,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/message/:id" 
+          element={
+            <ProtectedRoute>
+              <MessageDetail />
             </ProtectedRoute>
           } 
         />
