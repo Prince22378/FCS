@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Inbox from "./pages/Inbox.jsx";
 import MessageDetail from "./pages/MessageDetail.jsx";
+import "./styles/global.css";
 
 function Logout() {
   localStorage.clear();
