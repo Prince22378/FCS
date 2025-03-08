@@ -23,8 +23,6 @@ function Form({ route, method }) {
       if (method === "login") {
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
         localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
-        console.log(res.data.user_id);
-        console.log(res.data.access);
         navigate("/");
       } else {
         navigate("/login");

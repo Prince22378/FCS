@@ -123,6 +123,16 @@ class ProfileDetail(generics.RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     permission_classes = [IsAuthenticated]  
 
+    def get_object(self):
+        # Ensure that the profile being fetched belongs to the logged-in user
+        return self.request.user.profile
+
+    def perform_update(self, serializer):
+        # Perform the update on the profile
+        profile = serializer.save()
+        # Optionally, you can add more custom logic here if needed
+        return profile
+
 
 class SearchUser(generics.ListAPIView):
     serializer_class = ProfileSerializer

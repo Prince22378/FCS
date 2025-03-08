@@ -57,7 +57,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = [ 'id',  'user',  'full_name', 'image', 'verified' ]
+        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified' ]
     
     def __init__(self, *args, **kwargs):
         super(ProfileSerializer, self).__init__(*args, **kwargs)
@@ -66,6 +66,21 @@ class ProfileSerializer(serializers.ModelSerializer):
             self.Meta.depth = 0
         else:
             self.Meta.depth = 3
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Make sure the image field is a valid URL
+        if instance.image:
+            representation['image'] = instance.image.url  # Returns the absolute URL
+        return representation
+
+    def update(self, instance, validated_data):
+        # Custom update method if you want to modify some fields before saving
+        instance.full_name = validated_data.get('full_name', instance.full_name)
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+        return instance
 
 
 class MessageSerializer(serializers.ModelSerializer):

@@ -15,9 +15,9 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Inbox from "./pages/Inbox.jsx";
 import MessageDetail from "./pages/MessageDetail.jsx";
-import AdminRedirect from "./pages/AdminRedirect.jsx";
 import "./styles/global.css";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
+import EditProfile from "./pages/EditProfile.jsx";
 
 function Logout() {
   localStorage.clear();
@@ -73,7 +73,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/admin" element={<AdminRedirect />} />
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />
