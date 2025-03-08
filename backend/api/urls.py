@@ -20,4 +20,9 @@ urlpatterns = [
     # Get profile
     path("profile/<int:pk>/", views.ProfileDetail.as_view()),
     path("search/<username>/", views.SearchUser.as_view()),
+
+    #Admin routes
+    path('admin-dashboard/', views.AdminDashboard.as_view(), name='admin_dashboard'),
+    path('toggle-verification/<int:profile_id>/', views.ToggleUserVerification.as_view(), name='toggle_verification'),
+
 ]

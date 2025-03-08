@@ -20,7 +20,7 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=300)
-    bio = models.CharField(max_length=100)
+    bio = models.CharField(max_length=100, blank=True)
     image = models.ImageField(upload_to="user_images", default="default.jpg")
     verified = models.BooleanField(default=False)
 
@@ -29,7 +29,10 @@ class Profile(models.Model):
 
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        profile = Profile.objects.create(user=instance)
+        # Set full_name to the user's username
+        profile.full_name = instance.username
+        profile.save()
 
 
 def save_user_profile(sender, instance, **kwargs):

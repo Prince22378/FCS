@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import api from "../api";
 import { REFRESH_TOKEN, ACCESS_TOKEN } from "../constants";
@@ -48,6 +48,11 @@ function ProtectedRoute({ children }) {
 
   if (isAuthorized === null) {
     return <div>Loading...</div>;
+  }
+
+  // Redirect non-admin users trying to access /admin-dashboard
+  if (!isAuthorized && location.pathname === "/admin-dashboard") {
+    return <Navigate to="/" />;
   }
 
   return isAuthorized ? children : <Navigate to="/login" />;

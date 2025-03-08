@@ -9,8 +9,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import status
+from rest_framework.views import APIView
+
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -46,6 +48,37 @@ def testEndPoint(request):
         return Response({'response': data}, status=status.HTTP_200_OK)
     return Response({}, status.HTTP_400_BAD_REQUEST)
 
+
+class AdminDashboard(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        users = User.objects.all()
+        messages = ChatMessage.objects.all()
+        profiles = Profile.objects.all()
+
+        user_data = UserSerializer(users, many=True).data
+        message_data = MessageSerializer(messages, many=True).data
+        profile_data = ProfileSerializer(profiles, many=True).data
+
+        return Response({
+            "users": user_data,
+            "messages": message_data,
+            "profiles": profile_data
+        })
+    
+class ToggleUserVerification(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, profile_id):
+        try:
+            profile = Profile.objects.get(id=profile_id)
+            profile.verified = not profile.verified  # Toggle verification
+            profile.save()
+            return Response({"message": "Verification status updated", "verified": profile.verified}, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+    
 
 class MyInbox(generics.ListAPIView):
     serializer_class = MessageSerializer

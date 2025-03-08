@@ -1,6 +1,12 @@
 // src/App.jsx
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Homepage from "./pages/Home.jsx";
 import Register from "./pages/Register.jsx";
@@ -11,6 +17,7 @@ import Inbox from "./pages/Inbox.jsx";
 import MessageDetail from "./pages/MessageDetail.jsx";
 import AdminRedirect from "./pages/AdminRedirect.jsx";
 import "./styles/global.css";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 
 function Logout() {
   localStorage.clear();
@@ -24,7 +31,7 @@ function RegisterAndLogout() {
 
 const NavbarWrapper = () => {
   const location = useLocation();
-  const hideNavbarOn = ["/login", "/register"];
+  const hideNavbarOn = ["/login", "/register", "/admin-dashboard"];
 
   return !hideNavbarOn.includes(location.pathname) ? <Navbar /> : null;
 };
@@ -34,29 +41,37 @@ function App() {
     <BrowserRouter>
       <NavbarWrapper />
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/"
           element={
             <ProtectedRoute>
               <Homepage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/inbox" 
+        <Route
+          path="/inbox"
           element={
             <ProtectedRoute>
               <Inbox />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/message/:id" 
+        <Route
+          path="/message/:id"
           element={
             <ProtectedRoute>
               <MessageDetail />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="/admin" element={<AdminRedirect />} />
         <Route path="/login" element={<Login />} />
