@@ -12,3 +12,5 @@ toml
 tzdata
 pycodestyle
 autopep8
+cryptography
+Pillow
