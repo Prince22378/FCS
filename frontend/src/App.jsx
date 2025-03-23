@@ -12,12 +12,11 @@ import Homepage from "./pages/Home.jsx";
 import Register from "./pages/Register.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Navbar from "./components/Navbar.jsx";
-import Inbox from "./pages/Inbox.jsx";
-import MessageDetail from "./pages/MessageDetail.jsx";
 import "./styles/global.css";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
+import FriendPage from './pages/FriendPage';
+import ChatroomPage from "./pages/ChatRoomPage.jsx";
 
 function Logout() {
   localStorage.clear();
@@ -58,22 +57,6 @@ function App() {
           }
         />
         <Route
-          path="/inbox"
-          element={
-            <ProtectedRoute>
-              <Inbox />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/message/:id"
-          element={
-            <ProtectedRoute>
-              <MessageDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/edit-profile"
           element={
             <ProtectedRoute>
@@ -81,6 +64,24 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <FriendPage/>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatroomPage/>
+            </ProtectedRoute>
+          }
+        />
+
+        
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Profile, ChatMessage
+from .models import User, Profile, ChatMessage, FriendRequest
 from cryptography.fernet import Fernet
 import base64
 import os
@@ -26,6 +26,12 @@ class ChatMessageAdmin(admin.ModelAdmin):
 
     decrypted_message.short_description = "Decrypted Message"
 
+class FriendRequestAdmin(admin.ModelAdmin):
+    list_display = ['from_user', 'to_user', 'status', 'timestamp']
+    list_filter = ['status']
+    search_fields = ['from_user__username', 'to_user__username']
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(ChatMessage, ChatMessageAdmin)
+admin.site.register(FriendRequest, FriendRequestAdmin)

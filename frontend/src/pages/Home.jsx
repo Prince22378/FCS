@@ -5,7 +5,6 @@ import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN } from "../constants";
 import "../styles/Home.css";
 
-
 // const Homepage = () => {
 //   const [profile, setProfile] = useState(null);
 //   const navigate = useNavigate();
@@ -229,15 +228,11 @@ import "../styles/Home.css";
 
 // export default Homepage;
 
-
-
-
-
 const Homepage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const friendRequests = ["user_D1", "user_D2", "user_D3", "user_D4"];
+  const [friendRequests, setFriendRequests] = useState([]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -250,10 +245,23 @@ const Homepage = () => {
 
         const response = await api.get(`/api/profile/${userId}/`);
         setProfile(response.data);
+
+        // Fetch friend requests after getting profile
+        fetchFriendRequests();
+
         setLoading(false);
       } catch (error) {
         console.error("Error fetching user profile", error);
         navigate("/login");
+      }
+    };
+
+    const fetchFriendRequests = async () => {
+      try {
+        const response = await api.get("/api/friend-requests/");
+        setFriendRequests(response.data); // Assuming response.data is a list of usernames or user objects
+      } catch (error) {
+        console.error("Error fetching friend requests", error);
       }
     };
 
@@ -262,6 +270,21 @@ const Homepage = () => {
 
   const handleEditProfile = () => navigate("/edit-profile");
   const handleLogout = () => navigate("/logout");
+  const handleFriendPage = () => navigate("/friends");
+  const handleChatroomPage = () => navigate("/chat");
+
+  const handleFriendRequestResponse = async (requestId, action) => {
+    try {
+      await api.post(`/api/friend-requests/respond/${requestId}/`, {
+        action: action,
+      });
+      // After accepting/rejecting, refresh the list
+      const response = await api.get("/api/friend-requests/");
+      setFriendRequests(response.data);
+    } catch (error) {
+      console.error(`Failed to ${action} friend request:`, error);
+    }
+  };
 
   if (loading) {
     return <p className="loading">Loading...</p>;
@@ -285,13 +308,17 @@ const Homepage = () => {
         <button onClick={handleEditProfile} className="edit-button">
           Edit Profile
         </button>
-        <button className="sidebar-button" onClick={() => alert("Friends route not implemented!")}>
+        <button className="sidebar-button" onClick={handleFriendPage}>
           Friends
         </button>
-        <button className="sidebar-button" onClick={() => alert("Chatroom route not implemented!")}>
+        <button
+          className="sidebar-button" onClick={handleChatroomPage}>
           Chatroom
         </button>
-        <button className="sidebar-button" onClick={() => alert("MarketPlace route not implemented!")}>
+        <button
+          className="sidebar-button"
+          onClick={() => alert("MarketPlace route not implemented!")}
+        >
           MarketPlace
         </button>
         <button onClick={handleLogout} className="logout-button">
@@ -310,7 +337,7 @@ const Homepage = () => {
           />
         </div>
 
-        {/* Post 1 */}        
+        {/* Post 1 */}
         <div className="post-box">
           <div className="post-header">
             <img
@@ -350,19 +377,32 @@ const Homepage = () => {
         </div>
       </div>
 
-
       {/* Right Sidebar */}
       <div className="right-sidebar">
         <h3>Friend Requests</h3>
-        {friendRequests.map((req, index) => (
-          <div key={index} className="friend-request-item">
-            <span>{req}</span>
-            <div>
-              <button className="accept">&#10003;</button>
-              <button className="reject">&#10007;</button>
+        {friendRequests.length === 0 ? (
+          <p>No pending friend requests</p>
+        ) : (
+          friendRequests.map((req, index) => (
+            <div key={index} className="friend-request-item">
+              <span>{req.from_user?.username || `User_${index + 1}`}</span>
+              <div>
+                <button
+                  className="accept"
+                  onClick={() => handleFriendRequestResponse(req.id, "accept")}
+                >
+                  &#10003;
+                </button>
+                <button
+                  className="reject"
+                  onClick={() => handleFriendRequestResponse(req.id, "reject")}
+                >
+                  &#10007;
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

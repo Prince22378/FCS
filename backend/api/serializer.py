@@ -55,9 +55,10 @@ class RegisterSerializer(serializers.ModelSerializer):
     
 # A simple serializer for friend details
 class SimpleProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
     class Meta:
         model = Profile
-        fields = ['id', 'full_name']
+        fields = ['id', 'full_name', 'user']
 
     
 class ProfileSerializer(serializers.ModelSerializer):
