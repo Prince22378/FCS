@@ -39,7 +39,7 @@ const NavbarWrapper = () => {
 function App() {
   return (
     <BrowserRouter>
-      <NavbarWrapper />
+      {/* <NavbarWrapper /> */}
       <Routes>
         <Route
           path="/admin-dashboard"

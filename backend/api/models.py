@@ -23,6 +23,7 @@ class Profile(models.Model):
     bio = models.CharField(max_length=100, blank=True)
     image = models.ImageField(upload_to="user_images", default="default.jpg")
     verified = models.BooleanField(default=False)
+    friends = models.ManyToManyField('self', symmetrical=True, blank=True)
 
     def __str__(self):
         return self.full_name
@@ -39,6 +40,23 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+class FriendRequest(models.Model):
+    from_user = models.ForeignKey(User, related_name="friend_requests_sent", on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name="friend_requests_received", on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('pending', 'Pending'),
+            ('accepted', 'Accepted'),
+            ('rejected', 'Rejected')
+        ],
+        default='pending'
+    )
+
+    def __str__(self):
+        return f"{self.from_user.username} -> {self.to_user.username} ({self.status})"
 
 
 class ChatMessage(models.Model):

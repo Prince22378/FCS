@@ -1,4 +1,4 @@
-from api.models import User, Profile, ChatMessage
+from api.models import User, Profile, ChatMessage, FriendRequest
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
@@ -53,11 +53,18 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
     
+# A simple serializer for friend details
+class SimpleProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['id', 'full_name']
+
+    
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified' ]
+        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified', 'friends' ]
     
     def __init__(self, *args, **kwargs):
         super(ProfileSerializer, self).__init__(*args, **kwargs)
@@ -66,6 +73,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             self.Meta.depth = 0
         else:
             self.Meta.depth = 3
+
+    def get_friends(self, obj):
+        friends = obj.friends.all()
+        return SimpleProfileSerializer(friends, many=True).data
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -81,6 +92,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image', instance.image)
         instance.save()
         return instance
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    from_user = UserSerializer(read_only=True)
+    to_user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = FriendRequest
+        fields = ['id', 'from_user', 'to_user', 'timestamp', 'status']
 
 
 class MessageSerializer(serializers.ModelSerializer):

@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Q, Subquery, OuterRef
-from api.models import User, Profile, ChatMessage
+from api.models import User, Profile, ChatMessage, FriendRequest
 
-from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer
+from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -152,3 +152,74 @@ class SearchUser(generics.ListAPIView):
 
         serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
+    
+
+# View to list current user's friends
+class FriendListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SimpleProfileSerializer
+
+    def get_queryset(self):
+        return self.request.user.profile.friends.all()
+
+# View to list pending friend requests received by the current user
+class PendingFriendRequestsView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FriendRequestSerializer
+
+    def get_queryset(self):
+        return FriendRequest.objects.filter(to_user=self.request.user, status='pending')
+
+# View to send a friend request to another user
+class SendFriendRequestView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FriendRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        target_user_id = request.data.get("to_user_id")
+        if not target_user_id:
+            return Response({"error": "to_user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            target_user = User.objects.get(id=target_user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check for duplicate request or if already friends
+        if FriendRequest.objects.filter(from_user=request.user, to_user=target_user, status="pending").exists():
+            return Response({"error": "Friend request already sent."}, status=status.HTTP_400_BAD_REQUEST)
+        if target_user.profile in request.user.profile.friends.all():
+            return Response({"error": "You are already friends."}, status=status.HTTP_400_BAD_REQUEST)
+
+        friend_request = FriendRequest.objects.create(from_user=request.user, to_user=target_user)
+        serializer = self.get_serializer(friend_request)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# View to respond to a friend request (accept or reject)
+class RespondFriendRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, request_id):
+        action = request.data.get("action")
+        if action not in ["accept", "reject"]:
+            return Response({"error": "Invalid action. Must be 'accept' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            friend_request = FriendRequest.objects.get(id=request_id, to_user=request.user, status="pending")
+        except FriendRequest.DoesNotExist:
+            return Response({"error": "Friend request not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if action == "accept":
+            friend_request.status = "accepted"
+            friend_request.save()
+            # Add each other as friends (symmetric)
+            request.user.profile.friends.add(friend_request.from_user.profile)
+            return Response({"message": "Friend request accepted."}, status=status.HTTP_200_OK)
+        else:
+            friend_request.status = "rejected"
+            friend_request.save()
+            return Response({"message": "Friend request rejected."}, status=status.HTTP_200_OK)
+
+# Optional: View to list all registered users (for browsing and sending friend requests)
+class AllUsersListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProfileSerializer
+    queryset = Profile.objects.all()

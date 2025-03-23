@@ -1,68 +1,182 @@
-/* Container for the whole page */
-div {
-  font-family: Arial, sans-serif;
-}
-
-/* Styles for the notes section */
-.notes-section {
-  margin-bottom: 2rem;
-}
-
-.notes-section h2 {
-  color: #333;
-  font-size: 24px;
-}
-
-/* Styles for individual notes - assuming your Note component has some container element */
-.note {
-  background-color: #f9f9f9;
-  border-left: 5px solid #007bff;
-  margin: 10px 0;
-  padding: 10px 15px;
-  border-radius: 5px;
-}
-
-/* Styles for the form section */
-form {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  margin: auto;
-}
-
-form h2 {
-  color: #333;
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-form label {
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-form input,
-form textarea {
+/* === Force full width on root === */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
   width: 100%;
-  padding: 8px;
-  margin: 8px 0 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
+  font-family: sans-serif;
+  background-color: #add8e6;
 }
 
-form input[type="submit"] {
-  background-color: #007bff;
+/* === Full width layout === */
+.homepage {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* === Left Sidebar === */
+.left-sidebar {
+  width: 220px;
+  background-color: #474747;
+  padding: 1rem;
   color: white;
-  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-image {
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+
+.post-profile-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 0.7rem;
+}
+
+.post-username {
+  font-weight: bold;
+  color: #333;
+  font-size: 1rem;
+}
+
+
+
+.profile-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.profile-circle {
+  width: 60px;
+  height: 60px;
+  background-color: #ccc;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profile-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-button,
+.edit-button,
+.logout-button {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
 }
 
-form input[type="submit"]:hover {
-  background-color: #0056b3;
+.sidebar-button {
+  background-color: #c0c0c0;
+  color: #000;
+}
+
+.edit-button {
+  background-color: #1e90ff;
+  color: white;
+}
+
+.logout-button {
+  background-color: red;
+  color: white;
+}
+
+/* === Center content === */
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  background-color: #add8e6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.create-post {
+  background: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 1rem;
+}
+
+.create-post-input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.post-box {
+  background: white;
+  padding: 1rem;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 1rem;
+}
+
+.caption {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* === Right Sidebar === */
+.right-sidebar {
+  width: 250px;
+  background-color: #d4ecfa;
+  padding: 1rem;
+}
+
+.friend-request-item {
+  background-color: white;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.accept {
+  color: green;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+
+.reject {
+  color: red;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.loading {
+  text-align: center;
+  margin-top: 2rem;
 }
