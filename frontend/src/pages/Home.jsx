@@ -351,7 +351,23 @@ const Homepage = () => {
     return () => clearInterval(interval); // Clean-up on unmount
   }, []);
   
+  const fetchFriendRequests = async () => {
+    try {
+      const response = await api.get("/api/friend-requests/");
+      setFriendRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching friend requests", error);
+    }
+  };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchFriendRequests();
+    }, 5000); 
+  
+    return () => clearInterval(interval); 
+  }, []);
+  
   // const [posts, setPosts] = useState([]);
   const [newComments, setNewComments] = useState({}); // to hold input comment text
   const [showAllComments, setShowAllComments] = useState({});
@@ -417,7 +433,32 @@ const Homepage = () => {
     }
   };
   
-
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const [showProfileOverlay, setShowProfileOverlay] = useState(false);
+  const handleUsernameClick = async (userId) => {
+    try {
+      const response = await api.get(`/api/public-profile/${userId}/`);
+      setSelectedUserProfile(response.data);
+      setShowProfileOverlay(true);
+    } catch (error) {
+      console.error("Error fetching user profile", error);
+    }
+  };
+  
+  const handleSendFriendRequest = async (toUserId) => {
+    try {
+      await api.post("/api/friend-requests/send/", {
+        to_user_id: toUserId,
+      });
+      alert("Friend request sent!");
+      setShowProfileOverlay(false);
+    } catch (err) {
+      console.error("Failed to send friend request", err);
+      alert("Could not send request.");
+    }
+  };
+  
+    
   if (loading) {
     return <p className="loading">Loading...</p>;
   }
@@ -514,7 +555,13 @@ const Homepage = () => {
                   className="post-profile-pic"
                 />
               )}
-              <span className="post-username">{post.username}</span>
+              <span
+                className="post-username"
+                style={{ cursor: "pointer", color: "#007bff" }}
+                onClick={() => handleUsernameClick(post.user)}
+              >
+                {post.username}
+              </span>
                {/* ⋮ Menu Button */}
               <div className="post-menu-container">
                 <button
@@ -625,7 +672,7 @@ const Homepage = () => {
         );
       })}
         {/* Post 1 */}
-{/*         <div className="post-box">
+        {/*div className="post-box">
           <div className="post-header">  // const [posts, setPosts] = useState([]);
             <img
               src="https://via.placeholder.com/40"
@@ -645,7 +692,7 @@ const Homepage = () => {
         </div> */}
 
         {/* Post 2 */}
-{/*         <div className="post-box">
+        {/*<div className="post-box">
           <div className="post-header">
             <img
               src="https://via.placeholder.com/40"
@@ -719,7 +766,57 @@ const Homepage = () => {
         </div>
       </div>
     )}
+
+      {showProfileOverlay && selectedUserProfile && (
+        <div className="overlay-backdrop">
+          <div className="profile-overlay">
+            <button
+              className="close-btn"
+              onClick={() => setShowProfileOverlay(false)}
+            >
+              ✖
+            </button>
+            <img
+              src={`${api.defaults.baseURL}/api${selectedUserProfile.image}`}
+              alt="User"
+              className="overlay-profile-pic"
+            />
+            <h3>{selectedUserProfile.full_name}</h3>
+            <p>{selectedUserProfile.bio || "No bio available"}</p>
+
+            {/* {!selectedUserProfile.is_friend && selectedUserProfile.id !== profile?.id && (
+              <button
+                className="friend-request-btn"
+                onClick={async () => {
+                  try {
+                    await api.post("/api/friend-requests/send/", {
+                      to_user: selectedUserProfile.id,
+                    });
+                    alert("Friend request sent!");
+                    setShowProfileOverlay(false);
+                  } catch (err) {
+                    console.error("Error sending friend request", err);
+                  }
+                }}
+              >
+                Send Friend Request
+              </button>
+            )} */}
+            {selectedUserProfile && selectedUserProfile.user.id !== profile?.id && (
+              <button
+                className="send-request-button"
+                onClick={() => handleSendFriendRequest(selectedUserProfile.user.id)}
+              >
+                Send Friend Request
+              </button>
+            )}
+
+          </div>
+        </div>
+      )}
+
     </div>
+
   );
 };
 

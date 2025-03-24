@@ -15,8 +15,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 from rest_framework import viewsets, permissions
-from .models import Post, Reaction, Comment
-from .serializer import PostSerializer, CommentSerializer, ReactionSerializer
+from .models import Post, Reaction, Comment, Profile
+from .serializer import PostSerializer, CommentSerializer, ReactionSerializer, ProfileSerializer
 from django.shortcuts import get_object_or_404
 
 
@@ -355,6 +355,15 @@ class AllUsersListView(generics.ListAPIView):
     serializer_class = ProfileSerializer
     queryset = Profile.objects.all()
 
+
+@api_view(['GET'])
+def public_profile_view(request, user_id):
+    try:
+        profile = Profile.objects.get(user__id=user_id)
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+    except Profile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
 
 class LimitedCommentsView(ListAPIView):
     serializer_class = CommentSerializer

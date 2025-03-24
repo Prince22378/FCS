@@ -50,6 +50,9 @@ urlpatterns = [
     path("friend-requests/respond/<int:request_id>/", views.RespondFriendRequestView.as_view(), name="respond_friend_request"),
     path("all-users/", views.AllUsersListView.as_view(), name="all_users"),
 
+
+    path('public-profile/<int:user_id>/', views.public_profile_view),
+
 ]
 
 urlpatterns += router.urls
