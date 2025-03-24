@@ -89,12 +89,22 @@ function Form({ route, method }) {
             {name}
           </button>
         </form>
-        <p>
-          {method === "login" ? "New here? " : "Already have an account? "}
-          <a href={method === "login" ? "/register" : "/login"}>
-            {method === "login" ? "Sign Up" : "Login"}
-          </a>
-        </p>
+        <div className="form-footer-row">
+          {method === "login" ? (
+            <>
+              <div className="footer-left">
+                New here? <a href="/register">Sign Up</a>
+              </div>
+              <div className="footer-right">
+                <a href="/forgot-password">Forgot Password?</a>
+              </div>
+            </>
+          ) : (
+            <p>
+              Already have an account? <a href="/login">Login</a>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

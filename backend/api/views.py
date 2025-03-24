@@ -1,9 +1,10 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Q, Subquery, OuterRef
-from api.models import User, Profile, ChatMessage, FriendRequest
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP
 
-from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer
+from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer, SendOTPSerializer, VerifyOTPSerializer
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -13,7 +14,72 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import status
 from rest_framework.views import APIView
 
+import random
+from django.core.mail import send_mail
+from django.utils import timezone
+from datetime import timedelta
 
+
+
+class SendOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SendOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            now = timezone.now()
+
+            # Check if OTP was already sent recently
+            try:
+                otp_record = EmailOTP.objects.get(email=email)
+                time_since_last_otp = (now - otp_record.created_at).total_seconds()
+
+                if time_since_last_otp < 30:
+                    wait_time = int(30 - time_since_last_otp)
+                    return Response({
+                        "error": f"OTP already sent. Please wait {wait_time} more seconds."
+                    }, status=429)  # 429 Too Many Requests
+
+            except EmailOTP.DoesNotExist:
+                pass  # No previous OTP, safe to create
+
+            # Generate and send new OTP
+            otp = f"{random.randint(100000, 999999)}"
+            EmailOTP.objects.update_or_create(email=email, defaults={'otp': otp, 'created_at': now})
+
+            # Replace with actual send_mail setup
+            send_mail(
+                subject="Verify Your Email - OTP",
+                message=f"""
+                Hi there,
+
+                Thanks for signing up! Please use the following OTP to verify your email:
+
+                    {otp}
+
+                This code will expire in 5 minutes.
+
+                If you didn’t request this, just ignore this message.
+
+                """,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+
+            return Response({"message": "OTP sent to email."})
+        return Response(serializer.errors, status=400)
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = VerifyOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({"verified": True})
+        return Response(serializer.errors, status=400)
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -22,6 +88,20 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        try:
+            record = EmailOTP.objects.get(email=email)
+            if record.otp != otp or record.is_expired():
+                return Response({"otp": "Invalid or expired OTP."}, status=400)
+        except EmailOTP.DoesNotExist:
+            return Response({"otp": "OTP not found."}, status=400)
+
+        # If OTP valid, delete it and proceed
+        record.delete()
+        return super().create(request, *args, **kwargs)
 
 
 # Get All Routes

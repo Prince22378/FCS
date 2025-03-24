@@ -14,6 +14,11 @@ urlpatterns = [
     path('test/', views.testEndPoint, name='test'),
     path('', views.getRoutes),
 
+    #OTP Verification
+    path("send-otp/", views.SendOTPView.as_view(), name="send_otp"),
+    path("verify-otp/", views.VerifyOTPView.as_view(), name="verify_otp"),
+
+
     # Chat/Text Messaging Functionality
     path("my-messages/<user_id>/", views.MyInbox.as_view()),
     path("get-messages/<sender_id>/<reciever_id>/", views.GetMessages.as_view()),

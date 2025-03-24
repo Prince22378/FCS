@@ -14,3 +14,4 @@ pycodestyle
 autopep8
 cryptography
 Pillow
+requests

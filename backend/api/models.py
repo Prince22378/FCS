@@ -1,6 +1,9 @@
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import AbstractUser
+import random
+from datetime import timedelta
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -87,3 +90,15 @@ class ChatMessage(models.Model):
 
 post_save.connect(create_user_profile, sender=User)
 post_save.connect(save_user_profile, sender=User)
+
+
+class EmailOTP(models.Model):
+    email = models.EmailField(unique=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)  # OTP valid for 5 mins
+
+    def __str__(self):
+        return f"{self.email} - {self.otp}"

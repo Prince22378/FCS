@@ -1,4 +1,6 @@
-from api.models import User, Profile, ChatMessage, FriendRequest
+from django.conf import settings
+import requests
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
@@ -119,3 +121,43 @@ class MessageSerializer(serializers.ModelSerializer):
             self.Meta.depth = 0
         else:
             self.Meta.depth = 2
+
+
+class SendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    recaptcha = serializers.CharField()
+
+    def validate(self, data):
+        recaptcha_response = data.get("recaptcha")
+        secret_key = settings.RECAPTCHA_SECRET_KEY
+
+        # Verify with Google
+        response = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data={
+                "secret": secret_key,
+                "response": recaptcha_response
+            }
+        )
+        result = response.json()
+
+        if not result.get("success"):
+            raise serializers.ValidationError("reCAPTCHA verification failed.")
+
+        return data
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+    def validate(self, data):
+        try:
+            record = EmailOTP.objects.get(email=data['email'])
+            if record.otp != data['otp']:
+                raise serializers.ValidationError("Invalid OTP.")
+            if record.is_expired():
+                raise serializers.ValidationError("OTP has expired.")
+        except EmailOTP.DoesNotExist:
+            raise serializers.ValidationError("OTP not found for this email.")
+        return data
