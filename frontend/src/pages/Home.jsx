@@ -260,14 +260,14 @@ const Homepage = () => {
       }
     };
 
-    const fetchFriendRequests = async () => {
-      try {
-        const response = await api.get("/api/friend-requests/");
-        setFriendRequests(response.data); // Assuming response.data is a list of usernames or user objects
-      } catch (error) {
-        console.error("Error fetching friend requests", error);
-      }
-    };
+    // const fetchFriendRequests = async () => {
+    //   try {
+    //     const response = await api.get("/api/friend-requests/");
+    //     setFriendRequests(response.data); // Assuming response.data is a list of usernames or user objects
+    //   } catch (error) {
+    //     console.error("Error fetching friend requests", error);
+    //   }
+    // };
 
     fetchUserProfile();
   }, [navigate]);
@@ -349,14 +349,14 @@ const Homepage = () => {
     return () => clearInterval(interval); // Clean-up on unmount
   }, []);
   
-  // const fetchFriendRequests = async () => {
-  //   try {
-  //     const response = await api.get("/api/friend-requests/");
-  //     setFriendRequests(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching friend requests", error);
-  //   }
-  // };
+  const fetchFriendRequests = async () => {
+    try {
+      const response = await api.get("/api/friend-requests/");
+      setFriendRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching friend requests", error);
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
