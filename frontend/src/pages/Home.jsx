@@ -329,9 +329,7 @@ const Homepage = () => {
       setImage(null);
       setShowPostModal(false);
       setError("");
-  
-      // ⚠️ Yahin pe yeh line add karo:
-      // 🔁 Add a short delay then refresh posts
+
       setTimeout(() => {
         fetchPosts(); // reload posts
       }, 300); // 300ms delay for smoother experience
@@ -351,14 +349,14 @@ const Homepage = () => {
     return () => clearInterval(interval); // Clean-up on unmount
   }, []);
   
-  const fetchFriendRequests = async () => {
-    try {
-      const response = await api.get("/api/friend-requests/");
-      setFriendRequests(response.data);
-    } catch (error) {
-      console.error("Error fetching friend requests", error);
-    }
-  };
+  // const fetchFriendRequests = async () => {
+  //   try {
+  //     const response = await api.get("/api/friend-requests/");
+  //     setFriendRequests(response.data);
+  //   } catch (error) {
+  //     console.error("Error fetching friend requests", error);
+  //   }
+  // };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -435,6 +433,7 @@ const Homepage = () => {
   
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
   const [showProfileOverlay, setShowProfileOverlay] = useState(false);
+
   const handleUsernameClick = async (userId) => {
     try {
       const response = await api.get(`/api/public-profile/${userId}/`);
@@ -784,24 +783,6 @@ const Homepage = () => {
             <h3>{selectedUserProfile.full_name}</h3>
             <p>{selectedUserProfile.bio || "No bio available"}</p>
 
-            {/* {!selectedUserProfile.is_friend && selectedUserProfile.id !== profile?.id && (
-              <button
-                className="friend-request-btn"
-                onClick={async () => {
-                  try {
-                    await api.post("/api/friend-requests/send/", {
-                      to_user: selectedUserProfile.id,
-                    });
-                    alert("Friend request sent!");
-                    setShowProfileOverlay(false);
-                  } catch (err) {
-                    console.error("Error sending friend request", err);
-                  }
-                }}
-              >
-                Send Friend Request
-              </button>
-            )} */}
             {selectedUserProfile && selectedUserProfile.user.id !== profile?.id && (
               <button
                 className="send-request-button"
@@ -810,7 +791,6 @@ const Homepage = () => {
                 Send Friend Request
               </button>
             )}
-
           </div>
         </div>
       )}
