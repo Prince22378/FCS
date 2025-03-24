@@ -134,7 +134,7 @@ p {
   align-items: center;
   font-size: 0.95rem;
   width: 100%;
-  max-width: 350px; /*Match this with input width if set */
+  max-width: 570px; /*Match this with input width if set */
   margin: 0 auto;
   padding-top: 10px;
 }
