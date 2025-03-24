@@ -233,6 +233,10 @@ const Homepage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [friendRequests, setFriendRequests] = useState([]);
+  const [caption, setCaption] = useState("");
+  const [image, setImage] = useState(null);
+  const [error, setError] = useState("");
+  const [showPostModal, setShowPostModal] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -268,6 +272,21 @@ const Homepage = () => {
     fetchUserProfile();
   }, [navigate]);
 
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await api.get("/api/posts/");
+        setPosts(response.data);
+      } catch (err) {
+        console.error("Error fetching posts", err);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+  
   const handleEditProfile = () => navigate("/edit-profile");
   const handleLogout = () => navigate("/logout");
   const handleFriendPage = () => navigate("/friends");
@@ -286,6 +305,39 @@ const Homepage = () => {
     }
   };
 
+  const handleCreatePost = async () => {
+    if (!caption.trim() && !image) {
+      setError("Please add a caption or an image.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("caption", caption);
+    if (image) formData.append("image", image);
+  
+    try {
+      const token = localStorage.getItem(ACCESS_TOKEN);
+      await api.post("/api/posts/", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+  
+      // Reset modal
+      setCaption("");
+      setImage(null);
+      setShowPostModal(false);
+      setError("");
+  
+      // Optional: reload posts
+      // fetchPosts();
+    } catch (err) {
+      console.error("Failed to post", err);
+      setError("Something went wrong while posting.");
+    }
+  };
+  
   if (loading) {
     return <p className="loading">Loading...</p>;
   }
@@ -329,16 +381,44 @@ const Homepage = () => {
       {/* Center Content */}
       <div className="main-content">
         {/* Create Post */}
-        <div className="create-post">
-          <input
-            type="text"
-            placeholder="Create Post..."
-            className="create-post-input"
-          />
-        </div>
+        <div className="create-post" onClick={() => setShowPostModal(true)}>
+        <input
+          type="text"
+          placeholder="What's on your mind?"
+          className="create-post-input"
+          readOnly
+        />
+      </div>
+        {posts.map((post) => {
+        console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
 
+        return (
+          <div className="post-box" key={post.id}>
+            <div className="post-header">
+              {post.profile_image && (
+                <img
+                  src={`${import.meta.env.VITE_API_URL}/api${post.profile_image}`}
+                  alt="Profile"
+                  className="post-profile-pic"
+                />
+              )}
+              <span className="post-username">{post.username}</span>
+            </div>
+
+            {post.image && (
+              <img
+                src={`${import.meta.env.VITE_API_URL}/api${post.image}`}
+                alt="Post"
+                className="post-image"
+              />
+            )}
+
+            <div className="caption">{post.caption}</div>
+          </div>
+        );
+      })}
         {/* Post 1 */}
-        <div className="post-box">
+{/*         <div className="post-box">
           <div className="post-header">
             <img
               src="https://via.placeholder.com/40"
@@ -355,10 +435,10 @@ const Homepage = () => {
           />
 
           <div className="caption">This is a caption for post 1</div>
-        </div>
+        </div> */}
 
         {/* Post 2 */}
-        <div className="post-box">
+{/*         <div className="post-box">
           <div className="post-header">
             <img
               src="https://via.placeholder.com/40"
@@ -374,7 +454,7 @@ const Homepage = () => {
             className="post-image"
           />
           <div className="caption">This is the caption for post 2</div>
-        </div>
+        </div> */}
       </div>
 
       {/* Right Sidebar */}
@@ -404,6 +484,34 @@ const Homepage = () => {
           ))
         )}
       </div>
+        
+      {showPostModal && (
+      <div className="post-modal-overlay">
+        <div className="post-modal">
+          <h3>Create Post</h3>
+
+          <textarea
+            placeholder="Write a caption..."
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            className="caption-input"
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImage(e.target.files[0])}
+          />
+
+          {error && <p className="error-text">{error}</p>}
+
+          <div className="post-modal-actions">
+            <button onClick={handleCreatePost}>Post</button>
+            <button onClick={() => setShowPostModal(false)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };
