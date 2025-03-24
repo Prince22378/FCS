@@ -392,16 +392,15 @@ const Homepage = () => {
     };
     
   const [showFullBio, setShowFullBio] = useState(false);
+  const [openMenuPostId, setOpenMenuPostId] = useState(null);
 
   const handleDeletePost = async (postId) => {
     try {
-      const confirm = window.confirm("Are you sure you want to delete this post?");
-      if (!confirm) return;
-  
       await api.delete(`/api/posts/${postId}/`);
-      fetchPosts(); // refresh after delete
-    } catch (err) {
-      console.error("Delete post error", err);
+      fetchPosts(); // Refresh
+      setOpenMenuPostId(null); // Close dropdown
+    } catch (error) {
+      console.error("Error deleting post:", error);
     }
   };
   
@@ -503,22 +502,37 @@ const Homepage = () => {
                 />
               )}
               <span className="post-username">{post.username}</span>
-              {profile?.id === post.user && (
+               {/* ⋮ Menu Button */}
+              <div className="post-menu-container">
                 <button
-                  onClick={() => handleDeletePost(post.id)}
-                  className="delete-post-btn"
-                  style={{
-                    marginLeft: "auto",
-                    background: "transparent",
-                    border: "none",
-                    color: "red",
-                    cursor: "pointer",
-                    fontSize: "0.9rem"
-                  }}
+                  className="post-menu-btn"
+                  onClick={() =>
+                    setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)
+                  }
                 >
-                  🗑️ Delete
+                  ⋮
                 </button>
-              )}
+
+                {openMenuPostId === post.id && (
+                  <div className="post-menu-dropdown">
+                    {/* Show Delete only if user is author */}
+                    {profile?.id === post.user && (
+                      <button
+                        className="post-menu-item delete"
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        🗑 Delete
+                      </button>
+                    )}
+                    <button
+                      className="post-menu-item report"
+                      onClick={() => alert("Post reported!")}
+                    >
+                      🚩 Report
+                    </button>
+                  </div>
+                )}
+              </div>
 
             </div>
 

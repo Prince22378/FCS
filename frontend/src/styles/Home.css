@@ -414,3 +414,51 @@ html, body, #root {
     text-decoration: underline;
   }
   
+
+  .post-menu-container {
+    margin-left: auto;
+    position: relative;
+  }
+  
+  .post-menu-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  
+  .post-menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 25px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    width: 120px;
+    padding: 0.3rem;
+  }
+  
+  .post-menu-item {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .post-menu-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .post-menu-item.delete {
+    color: red;
+  }
+  
+  .post-menu-item.report {
+    color: #333;
+  }
+  
