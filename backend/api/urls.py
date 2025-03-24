@@ -3,9 +3,15 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 
+from rest_framework.routers import DefaultRouter
+from .views import PostViewSet
+
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
+
+router = DefaultRouter()
+router.register(r'posts', PostViewSet)
 
 urlpatterns = [
     path('token/', views.MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -34,6 +40,8 @@ urlpatterns = [
     path("all-users/", views.AllUsersListView.as_view(), name="all_users"),
 
 ]
+
+urlpatterns += router.urls
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
