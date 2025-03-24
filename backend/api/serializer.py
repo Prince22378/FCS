@@ -24,6 +24,33 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # ...
         return token
 
+# class PostSerializer(serializers.ModelSerializer):
+#     username = serializers.CharField(source='user.username', read_only=True)
+
+#     class Meta:
+#         model = Post
+#         fields = ['id', 'username', 'image', 'caption', 'created_at']
+
+class PostSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = ['id', 'username', 'profile_image', 'image', 'caption', 'created_at']
+
+    def get_profile_image(self, obj):
+        try:
+            return obj.user.profile.image.url
+        except:
+            return None
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if instance.image:
+            rep['image'] = instance.image.url  # returns relative path like /media/posts/xyz.png
+        return rep
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
