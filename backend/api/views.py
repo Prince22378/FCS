@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework import status
 from rest_framework.views import APIView
 
@@ -29,6 +29,10 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+class IsOwnerOrReadOnly(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        # Allow DELETE only if the logged-in user is the post owner
+        return obj.user == request.user
 
 class SendOTPView(APIView):
     permission_classes = [AllowAny]
@@ -208,13 +212,18 @@ class SendMessages(generics.CreateAPIView):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    # permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
 
     def get_serializer_context(self):
         return {'request': self.request}
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    # def get_queryset(self):
+    #     return Post.objects.all()
 
 class ReactToPost(APIView):
     permission_classes = [IsAuthenticated]

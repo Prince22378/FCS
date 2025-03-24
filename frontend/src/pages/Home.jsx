@@ -391,6 +391,21 @@ const Homepage = () => {
       }
     };
     
+  const [showFullBio, setShowFullBio] = useState(false);
+
+  const handleDeletePost = async (postId) => {
+    try {
+      const confirm = window.confirm("Are you sure you want to delete this post?");
+      if (!confirm) return;
+  
+      await api.delete(`/api/posts/${postId}/`);
+      fetchPosts(); // refresh after delete
+    } catch (err) {
+      console.error("Delete post error", err);
+    }
+  };
+  
+
   if (loading) {
     return <p className="loading">Loading...</p>;
   }
@@ -408,7 +423,40 @@ const Homepage = () => {
               />
             )}
           </div>
+
+          <div className="profile-username-verify">
+            <span className="profile-username">
+              {profile?.full_name || "User_Name"}
+            </span>
+            <span className="profile-verify">
+              {profile?.verified ? "✔ Verified" : "Verify"}
+            </span>
+          </div>
+
+          <div className="profile-bio-box">
+            {" "}
+            {profile?.bio ? (
+              <>
+                {showFullBio
+                  ? profile.bio
+                  : profile.bio.split(" ").slice(0, 4).join(" ") +
+                    (profile.bio.split(" ").length > 4 ? "..." : "")}
+                {profile.bio.split(" ").length > 4 && (
+                  <span
+                    onClick={() => setShowFullBio(!showFullBio)}
+                    style={{ color: "blue", cursor: "pointer", marginLeft: "5px" }}
+                  >
+                    {showFullBio ? "less" : "more"}
+                  </span>
+                )}
+              </>
+            ) : (
+              "N/A"
+            )}
+          </div>
         </div>
+
+
 
         <button onClick={handleEditProfile} className="edit-button">
           Edit Profile
@@ -455,6 +503,23 @@ const Homepage = () => {
                 />
               )}
               <span className="post-username">{post.username}</span>
+              {profile?.id === post.user && (
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="delete-post-btn"
+                  style={{
+                    marginLeft: "auto",
+                    background: "transparent",
+                    border: "none",
+                    color: "red",
+                    cursor: "pointer",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  🗑️ Delete
+                </button>
+              )}
+
             </div>
 
             {post.image && (
