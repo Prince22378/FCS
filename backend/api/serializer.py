@@ -1,6 +1,6 @@
 from django.conf import settings
 import requests
-from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
@@ -33,25 +33,70 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 #         model = Post
 #         fields = ['id', 'username', 'image', 'caption', 'created_at']
 
+
+class ReactionSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = Reaction
+        fields = ['id', 'user', 'post', 'created_at']
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    profile_image = serializers.SerializerMethodField()
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user', 'post', 'text', 'created_at', 'username', 'profile_image']
+
+    def get_profile_image(self, obj):
+        return obj.user.profile.image.url if obj.user.profile.image else None
+
 class PostSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     profile_image = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    comments = CommentSerializer(many=True, read_only=True)
+    has_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'username', 'profile_image', 'image', 'caption', 'created_at']
+        fields = [
+            'id',
+            'username',
+            'profile_image',
+            'image',
+            'caption',
+            'created_at',
+            'likes_count',   # if you're using
+            'comments',       # 👈 Add this line
+            'has_liked'
+        ]
 
     def get_profile_image(self, obj):
         try:
             return obj.user.profile.image.url
         except:
             return None
+            
+    def get_likes_count(self, obj):
+        return obj.reactions.count()
+
+    def get_has_liked(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            return obj.reactions.filter(user=request.user).exists()  # 👈 updated name
+        return False
+
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         if instance.image:
             rep['image'] = instance.image.url  # returns relative path like /media/posts/xyz.png
         return rep
+    
+
 
 
 class RegisterSerializer(serializers.ModelSerializer):

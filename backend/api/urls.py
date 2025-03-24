@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet
+from .views import PostViewSet, LimitedCommentsView, AllCommentsView
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -29,6 +29,12 @@ urlpatterns = [
     path("my-messages/<user_id>/", views.MyInbox.as_view()),
     path("get-messages/<sender_id>/<reciever_id>/", views.GetMessages.as_view()),
     path("send-messages/", views.SendMessages.as_view()),
+
+    # Post 
+    path("react/", views.ReactToPost.as_view(), name="react_post"),
+    path("comment/", views.AddComment.as_view(), name="add_comment"),
+    path('comments/limited/<int:post_id>/', LimitedCommentsView.as_view(), name='limited_comments'),
+    path('comments/all/<int:post_id>/', AllCommentsView.as_view(), name='all_comments'),
 
     # Get profile
     path("profile/<int:pk>/", views.ProfileDetail.as_view(), name="profile_detail"),

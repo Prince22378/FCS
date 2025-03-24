@@ -138,8 +138,10 @@ html, body, #root {
   }
   
   .caption {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 1.0rem;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #000;
   }
   
   /* === Right Sidebar === */
@@ -230,8 +232,102 @@ html, body, #root {
     height: auto;
     object-fit: contain;
     display: block;
-    border: 2px solid red;
+    border: 3x solid red;
 
   }
   
+  .timestamp {
+    font-size: 0.65rem;
+    margin-top: 55px;
+    color: #555;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  
+  .like-btn {
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+
+  }
+  
+  .like-btn:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .like-btn.liked {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  
+  
+  .comments {
+    margin-top: 0.8rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .comment {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  
+  .comment-profile-pic {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+  }
+  
+  .comment-body {
+    background-color: #f2f2f2;
+    padding: 8px;
+    border-radius: 6px;
+    max-width: 80%;
+  }
+  
+  .add-comment {
+    display: flex;
+    margin-top: 10px;
+  }
+  
+  .add-comment input {
+    flex: 1;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-right: 6px;
+  }
+  
+  .add-comment button {
+    padding: 6px 10px;
+    background-color: #1e90ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .load-more-comments {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 5px;
+  }
+  
+  .comment-time {
+    font-size: 0.62rem;
+    color: gray;
+    margin-top: 1px;
+    display: block;
+  }
   

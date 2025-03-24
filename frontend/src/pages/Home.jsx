@@ -338,6 +338,59 @@ const Homepage = () => {
     }
   };
   
+
+  // const [posts, setPosts] = useState([]);
+  const [newComments, setNewComments] = useState({}); // to hold input comment text
+  const [showAllComments, setShowAllComments] = useState({});
+
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try{
+      const response = await api.get("/api/posts/");
+      console.log("Posts response:", response.data); 
+      setPosts(response.data);
+    }catch (err) {
+      console.error("Error fetching posts", err);
+  }
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    const text = newComments[postId];
+    if (!text?.trim()) return;
+
+    try {
+      await api.post("/api/comment/", { post: postId, text });
+      setNewComments({ ...newComments, [postId]: "" });
+      fetchPosts(); // refresh comments
+    } catch (err) {
+      console.error("Comment error", err);
+    }
+  };
+
+  const [likedPosts, setLikedPosts] = useState([]);
+
+  const handleLike = async (postId) => {
+      try {
+        await api.post("/api/react/", { post: postId });
+    
+        setLikedPosts((prevLiked) => {
+          if (prevLiked.includes(postId)) {
+            return prevLiked.filter((id) => id !== postId); // unlike
+          } else {
+            return [...prevLiked, postId]; // like
+          }
+        });
+    
+        fetchPosts(); // refresh post data (likes count)
+      } catch (err) {
+        console.error("Like error", err);
+      }
+    };
+    
   if (loading) {
     return <p className="loading">Loading...</p>;
   }
@@ -390,8 +443,7 @@ const Homepage = () => {
         />
       </div>
         {posts.map((post) => {
-        console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
-
+        // console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
         return (
           <div className="post-box" key={post.id}>
             <div className="post-header">
@@ -414,12 +466,75 @@ const Homepage = () => {
             )}
 
             <div className="caption">{post.caption}</div>
+            <div className="timestamp">
+              {new Date(post.created_at).toLocaleString()}
+            </div>
+            {/* ❤️ Like Button */}
+            {/* <button className="like-btn" onClick={() => handleLike(post.id)}>
+              👍 Like ({post.likes_count})
+            </button> */}
+            <button
+              className={`like-btn ${post.has_liked ? "liked" : ""}`}
+              onClick={() => handleLike(post.id)}
+            >
+              👍 Like ({post.likes_count})
+            </button>
+
+            {/* 💬 Comments Section */}
+            <div className="comments">
+              <h4>Comments</h4>
+              {(showAllComments[post.id]
+                  ? post.comments
+                  : post.comments.slice(0, 3)
+                ).map((comment) => (
+                  <div key={comment.id} className="comment">
+                    <img
+                      src={`${import.meta.env.VITE_API_URL}/api${comment.profile_image}`}
+                      alt="Commenter"
+                      className="comment-profile-pic"
+                    />
+                    <div className="comment-body">
+                      <strong>{comment.username}</strong>
+                      <p>{comment.text}</p>
+                      <small className="comment-time">
+                        {new Date(comment.created_at).toLocaleString()}
+                      </small>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Show "Load More" if there are more than 3 comments and not all are shown */}
+                {post.comments.length > 3 && !showAllComments[post.id] && (
+                  <button
+                    className="load-more-comments"
+                    onClick={() =>
+                      setShowAllComments({ ...showAllComments, [post.id]: true })
+                    }
+                  >
+                    Load more comments
+                  </button>
+                )}
+
+
+              {/* Add Comment Input */}
+              <div className="add-comment">
+                <input
+                  type="text"
+                  placeholder="Write a comment..."
+                  value={newComments[post.id] || ""}
+                  onChange={(e) =>
+                    setNewComments({ ...newComments, [post.id]: e.target.value })
+                  }
+                />
+                <button onClick={() => handleCommentSubmit(post.id)}>Post</button>
+              </div>
+            </div>
           </div>
         );
       })}
         {/* Post 1 */}
 {/*         <div className="post-box">
-          <div className="post-header">
+          <div className="post-header">  // const [posts, setPosts] = useState([]);
             <img
               src="https://via.placeholder.com/40"
               alt="User Profile"

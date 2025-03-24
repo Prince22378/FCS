@@ -15,8 +15,14 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 from rest_framework import viewsets, permissions
-from .models import Post
-from .serializer import PostSerializer
+from .models import Post, Reaction, Comment
+from .serializer import PostSerializer, CommentSerializer, ReactionSerializer
+from django.shortcuts import get_object_or_404
+
+
+from rest_framework.generics import ListAPIView
+from api.models import Comment
+from api.serializer import CommentSerializer
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -204,8 +210,35 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_serializer_context(self):
+        return {'request': self.request}
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class ReactToPost(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        post_id = request.data.get("post")
+        post = get_object_or_404(Post, id=post_id)
+        reaction, created = Reaction.objects.get_or_create(user=request.user, post=post)
+        if not created:
+            reaction.delete()
+            return Response({"message": "Like removed"})
+        return Response({"message": "Post liked"})
+
+
+class AddComment(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
 
 class ProfileDetail(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
@@ -312,3 +345,19 @@ class AllUsersListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProfileSerializer
     queryset = Profile.objects.all()
+
+
+class LimitedCommentsView(ListAPIView):
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comment.objects.filter(post_id=post_id).order_by('-created_at')[:3]  # last 3
+
+class AllCommentsView(ListAPIView):
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comment.objects.filter(post_id=post_id).order_by('-created_at')
+
