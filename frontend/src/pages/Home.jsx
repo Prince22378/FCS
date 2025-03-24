@@ -330,13 +330,26 @@ const Homepage = () => {
       setShowPostModal(false);
       setError("");
   
-      // Optional: reload posts
-      // fetchPosts();
+      // ⚠️ Yahin pe yeh line add karo:
+      // 🔁 Add a short delay then refresh posts
+      setTimeout(() => {
+        fetchPosts(); // reload posts
+      }, 300); // 300ms delay for smoother experience
+
+  
     } catch (err) {
       console.error("Failed to post", err);
       setError("Something went wrong while posting.");
     }
   };
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPosts();
+    }, 5000); // 5 sec refresh
+  
+    return () => clearInterval(interval); // Clean-up on unmount
+  }, []);
   
 
   // const [posts, setPosts] = useState([]);
