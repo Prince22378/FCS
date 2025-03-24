@@ -1,6 +1,6 @@
 from django.conf import settings
 import requests
-from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
@@ -25,6 +25,33 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['verified'] = user.profile.verified
         # ...
         return token
+
+# class PostSerializer(serializers.ModelSerializer):
+#     username = serializers.CharField(source='user.username', read_only=True)
+
+#     class Meta:
+#         model = Post
+#         fields = ['id', 'username', 'image', 'caption', 'created_at']
+
+class PostSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = ['id', 'username', 'profile_image', 'image', 'caption', 'created_at']
+
+    def get_profile_image(self, obj):
+        try:
+            return obj.user.profile.image.url
+        except:
+            return None
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if instance.image:
+            rep['image'] = instance.image.url  # returns relative path like /media/posts/xyz.png
+        return rep
 
 
 class RegisterSerializer(serializers.ModelSerializer):

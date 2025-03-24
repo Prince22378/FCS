@@ -14,6 +14,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import status
 from rest_framework.views import APIView
 
+from rest_framework import viewsets, permissions
+from .models import Post
+from .serializer import PostSerializer
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -196,7 +199,13 @@ class GetMessages(generics.ListAPIView):
 class SendMessages(generics.CreateAPIView):
     serializer_class = MessageSerializer
 
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all().order_by('-created_at')
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class ProfileDetail(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer

@@ -60,6 +60,12 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f"{self.from_user.username} -> {self.to_user.username} ({self.status})"
+        
+class Post(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='posts/', null=True, blank=True)
+    caption = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ChatMessage(models.Model):
