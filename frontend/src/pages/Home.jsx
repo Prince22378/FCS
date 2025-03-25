@@ -238,6 +238,23 @@ const Homepage = () => {
   const [error, setError] = useState("");
   const [showPostModal, setShowPostModal] = useState(false);
 
+  const [posts, setPosts] = useState([]);
+
+  const [newComments, setNewComments] = useState({}); // to hold input comment text
+  const [showAllComments, setShowAllComments] = useState({});
+
+  const [likedPosts, setLikedPosts] = useState([]);
+
+  const [showFullBio, setShowFullBio] = useState(false);
+  const [openMenuPostId, setOpenMenuPostId] = useState(null);
+
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const [showProfileOverlay, setShowProfileOverlay] = useState(false);
+
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [govtDoc, setGovtDoc] = useState(null);
+  const [verificationStatus, setVerificationStatus] = useState("");
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -272,7 +289,7 @@ const Homepage = () => {
     fetchUserProfile();
   }, [navigate]);
 
-  const [posts, setPosts] = useState([]);
+
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -367,8 +384,6 @@ const Homepage = () => {
   }, []);
   
   // const [posts, setPosts] = useState([]);
-  const [newComments, setNewComments] = useState({}); // to hold input comment text
-  const [showAllComments, setShowAllComments] = useState({});
 
 
   useEffect(() => {
@@ -398,7 +413,7 @@ const Homepage = () => {
     }
   };
 
-  const [likedPosts, setLikedPosts] = useState([]);
+
 
   const handleLike = async (postId) => {
       try {
@@ -418,8 +433,7 @@ const Homepage = () => {
       }
     };
     
-  const [showFullBio, setShowFullBio] = useState(false);
-  const [openMenuPostId, setOpenMenuPostId] = useState(null);
+
 
   const handleDeletePost = async (postId) => {
     try {
@@ -431,8 +445,6 @@ const Homepage = () => {
     }
   };
   
-  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
-  const [showProfileOverlay, setShowProfileOverlay] = useState(false);
 
   const handleUsernameClick = async (userId) => {
     try {
@@ -457,6 +469,37 @@ const Homepage = () => {
     }
   };
   
+  const handleVerifySubmit = async () => {
+    if (!govtDoc) return alert("Please upload your government document.");
+  
+    const formData = new FormData();
+    formData.append("govt_document", govtDoc);
+  
+    try {
+      const token = localStorage.getItem(ACCESS_TOKEN);
+      await api.put(`/api/profile/${profile.id}/verify/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+  
+      // ✅ Re-fetch profile after successful submission
+      const updatedProfile = await api.get(`/api/profile/${profile.id}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setProfile(updatedProfile.data);
+  
+      setVerificationStatus("pending");
+      setShowVerifyModal(false);
+    } catch (err) {
+      console.error("Verification upload failed", err);
+      alert("Something went wrong while uploading.");
+    }
+  };
+  
     
   if (loading) {
     return <p className="loading">Loading...</p>;
@@ -476,13 +519,32 @@ const Homepage = () => {
             )}
           </div>
 
-          <div className="profile-username-verify">
+          {/* <div className="profile-username-verify">
             <span className="profile-username">
               {profile?.full_name || "User_Name"}
             </span>
             <span className="profile-verify">
               {profile?.verified ? "✔ Verified" : "Verify"}
             </span>
+          </div> */}
+          <div className="profile-username-verify">
+            <span className="profile-username">
+              {profile?.full_name || "User_Name"}
+            </span>
+
+            {profile?.verified ? (
+              <span className="profile-verify">✔ Verified</span>
+            ) : profile?.is_verification_pending ? (
+              <span className="profile-verify pending">🕓 Verification Pending</span>
+            ) : (
+              <span
+                className="profile-verify"
+                style={{ color: "#007bff", cursor: "pointer" }}
+                onClick={() => setShowVerifyModal(true)}
+              >
+                Verify
+              </span>
+            )}
           </div>
 
           <div className="profile-bio-box">
@@ -739,32 +801,32 @@ const Homepage = () => {
       </div>
         
       {showPostModal && (
-      <div className="post-modal-overlay">
-        <div className="post-modal">
-          <h3>Create Post</h3>
+        <div className="post-modal-overlay">
+          <div className="post-modal">
+            <h3>Create Post</h3>
 
-          <textarea
-            placeholder="Write a caption..."
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            className="caption-input"
-          />
+            <textarea
+              placeholder="Write a caption..."
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              className="caption-input"
+            />
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImage(e.target.files[0])}
-          />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImage(e.target.files[0])}
+            />
 
-          {error && <p className="error-text">{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-          <div className="post-modal-actions">
-            <button onClick={handleCreatePost}>Post</button>
-            <button onClick={() => setShowPostModal(false)}>Cancel</button>
+            <div className="post-modal-actions">
+              <button onClick={handleCreatePost}>Post</button>
+              <button onClick={() => setShowPostModal(false)}>Cancel</button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
       {showProfileOverlay && selectedUserProfile && (
         <div className="overlay-backdrop">
@@ -791,6 +853,26 @@ const Homepage = () => {
                 Send Friend Request
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {showVerifyModal && (
+        <div className="overlay-backdrop">
+          <div className="profile-overlay">
+            <button className="close-btn" onClick={() => setShowVerifyModal(false)}>
+              ✖
+            </button>
+            <h3>Upload Government Document</h3>
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              onChange={(e) => setGovtDoc(e.target.files[0])}
+            />
+            
+            <button onClick={handleVerifySubmit} className="send-request-button">
+              Submit for Verification
+            </button>
           </div>
         </div>
       )}

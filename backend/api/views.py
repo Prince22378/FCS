@@ -22,7 +22,7 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.generics import ListAPIView
 from api.models import Comment
-from api.serializer import CommentSerializer
+from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -379,3 +379,43 @@ class AllCommentsView(ListAPIView):
         post_id = self.kwargs['post_id']
         return Comment.objects.filter(post_id=post_id).order_by('-created_at')
 
+class ProfileVerificationUploadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, user_id):
+        try:
+            profile = Profile.objects.get(user__id=user_id)
+
+            if profile.user != request.user:
+                return Response({"detail": "Not allowed."}, status=status.HTTP_403_FORBIDDEN)
+
+            serializer = ProfileVerifySerializer(profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"detail": "Document uploaded. Awaiting verification."}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Profile.DoesNotExist:
+            return Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PendingVerificationsView(ListAPIView):
+    queryset = Profile.objects.filter(is_verification_pending=True)
+    serializer_class = VerificationPendingProfileSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_serializer_context(self):
+        return {"request": self.request}  # 👈 Yeh important hai!
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_verification_doc(request):
+    profile = request.user.profile
+    if 'document' not in request.FILES:
+        return Response({'error': 'No document provided.'}, status=400)
+
+    profile.verified_doc = request.FILES['document']
+    profile.save()
+    return Response({'message': 'Document uploaded, awaiting admin verification.'})

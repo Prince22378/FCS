@@ -139,10 +139,12 @@ class SimpleProfileSerializer(serializers.ModelSerializer):
 
     
 class ProfileSerializer(serializers.ModelSerializer):
+    govt_document = serializers.SerializerMethodField()
+    is_verification_pending = serializers.BooleanField()
 
     class Meta:
         model = Profile
-        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified', 'friends' ]
+        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified', 'friends', 'govt_document', 'is_verification_pending' ]
     
     def __init__(self, *args, **kwargs):
         super(ProfileSerializer, self).__init__(*args, **kwargs)
@@ -162,6 +164,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         if instance.image:
             representation['image'] = instance.image.url  # Returns the absolute URL
         return representation
+
+    def get_govt_document(self, obj):
+        if obj.govt_document:
+            return f"{obj.govt_document.url}"
+        return None
 
     def update(self, instance, validated_data):
         # Custom update method if you want to modify some fields before saving
@@ -236,3 +243,29 @@ class VerifyOTPSerializer(serializers.Serializer):
         except EmailOTP.DoesNotExist:
             raise serializers.ValidationError("OTP not found for this email.")
         return data
+
+class ProfileVerifySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['govt_document']
+
+    def update(self, instance, validated_data):
+        instance.govt_document = validated_data.get('govt_document', instance.govt_document)
+        instance.is_verification_pending = True
+        instance.save()
+        return instance
+
+
+class VerificationPendingProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username')
+    verification_file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = ['id', 'username', 'full_name', 'govt_document', 'is_verification_pending', 'verified', 'verification_file_url']
+
+    def get_verification_file_url(self, obj):
+        if obj.govt_document:
+            return f"/api{obj.govt_document.url}"  # 👈 Important
+        return None
+

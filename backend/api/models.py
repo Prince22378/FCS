@@ -26,6 +26,8 @@ class Profile(models.Model):
     bio = models.CharField(max_length=100, blank=True)
     image = models.ImageField(upload_to="user_images", default="default.jpg")
     verified = models.BooleanField(default=False)
+    is_verification_pending = models.BooleanField(default=False)
+    govt_document = models.FileField(upload_to='govt_docs/', null=True, blank=True)
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
 
     def __str__(self):
