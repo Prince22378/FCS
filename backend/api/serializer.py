@@ -101,7 +101,6 @@ class PostSerializer(serializers.ModelSerializer):
     
 
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password])
@@ -135,7 +134,7 @@ class SimpleProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     class Meta:
         model = Profile
-        fields = ['id', 'full_name', 'user']
+        fields = ['id', 'full_name', 'user', 'image']
 
     
 class ProfileSerializer(serializers.ModelSerializer):
