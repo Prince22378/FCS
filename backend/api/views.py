@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
+from rest_framework.exceptions import PermissionDenied
 from rest_framework import status
 from rest_framework.views import APIView
 
@@ -174,40 +175,66 @@ class ToggleUserVerification(APIView):
     
 
 class MyInbox(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
 
     def get_queryset(self):
         user_id = self.kwargs['user_id']
+        
+        if str(self.request.user.id) != user_id:
+            raise PermissionDenied("You can only view your own inbox.")
 
         messages = ChatMessage.objects.filter(
-            id__in =  Subquery(
+            id__in=Subquery(
                 User.objects.filter(
                     Q(sender__reciever=user_id) |
                     Q(reciever__sender=user_id)
                 ).distinct().annotate(
                     last_msg=Subquery(
                         ChatMessage.objects.filter(
-                            Q(sender=OuterRef('id'),reciever=user_id) |
-                            Q(reciever=OuterRef('id'),sender=user_id)
-                        ).order_by('-id')[:1].values_list('id',flat=True) 
+                            Q(sender=OuterRef('id'), reciever=user_id) |
+                            Q(reciever=OuterRef('id'), sender=user_id)
+                        ).order_by('-id')[:1].values_list('id', flat=True)
                     )
                 ).values_list('last_msg', flat=True).order_by("-id")
             )
         ).order_by("-id")
-            
+
         return messages
-    
+
+
 class GetMessages(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
-    
+
     def get_queryset(self):
         sender_id = self.kwargs['sender_id']
         reciever_id = self.kwargs['reciever_id']
-        messages =  ChatMessage.objects.filter(sender__in=[sender_id, reciever_id], reciever__in=[sender_id, reciever_id])
-        return messages
+        user_id = str(self.request.user.id)
+
+        if user_id not in [str(sender_id), str(reciever_id)]:
+            raise PermissionDenied("You are not allowed to view these messages.")
+
+        return ChatMessage.objects.filter(
+            sender__in=[sender_id, reciever_id],
+            reciever__in=[sender_id, reciever_id]
+        )
+
 
 class SendMessages(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
+
+    def perform_create(self, serializer):
+        sender = self.request.user
+        reciever = self.request.data.get("reciever")
+
+        if not reciever:
+            raise PermissionDenied("Receiver is required.")
+        if str(sender.id) == str(reciever):
+            raise PermissionDenied("You cannot send messages to yourself.")
+
+        serializer.save(sender=sender)
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
