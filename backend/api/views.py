@@ -28,6 +28,8 @@ import random
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -224,6 +226,7 @@ class GetMessages(generics.ListAPIView):
 class SendMessages(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
+    parser_classes = [MultiPartParser, FormParser] 
 
     def perform_create(self, serializer):
         sender = self.request.user

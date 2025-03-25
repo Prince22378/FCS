@@ -97,6 +97,7 @@ class ChatMessage(models.Model):
     reciever = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="reciever")
 
     message = models.CharField(max_length=10000000000)
+    media = models.FileField(upload_to='chat_media/', null=True, blank=True)
 
     is_read = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True)
