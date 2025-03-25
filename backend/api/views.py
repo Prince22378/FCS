@@ -27,6 +27,8 @@ import random
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -208,6 +210,7 @@ class GetMessages(generics.ListAPIView):
 
 class SendMessages(generics.CreateAPIView):
     serializer_class = MessageSerializer
+    parser_classes = [MultiPartParser, FormParser] 
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')

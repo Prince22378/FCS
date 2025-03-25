@@ -193,7 +193,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatMessage
-        fields = ['id','sender', 'reciever', 'reciever_profile', 'sender_profile' ,'message', 'is_read', 'date']
+        fields = ['id','sender', 'reciever', 'reciever_profile', 'sender_profile' ,'message', 'media', 'is_read', 'date']
     
     def __init__(self, *args, **kwargs):
         super(MessageSerializer, self).__init__(*args, **kwargs)
@@ -202,6 +202,12 @@ class MessageSerializer(serializers.ModelSerializer):
             self.Meta.depth = 0
         else:
             self.Meta.depth = 2
+    
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if instance.media:
+            rep['media'] = instance.media.url  # Return full URL path
+        return rep
 
 
 class SendOTPSerializer(serializers.Serializer):
