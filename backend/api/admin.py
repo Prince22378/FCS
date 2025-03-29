@@ -1,10 +1,8 @@
 from django.contrib import admin
 from .models import User, Profile, ChatMessage, FriendRequest
-from cryptography.fernet import Fernet
 import base64
 import os
 
-ENCRYPTION_KEY = b'A854WEExfNlYfIZ163129WqBXJw671H24KpdR2m1y2o='
 
 
 class UserAdmin(admin.ModelAdmin):

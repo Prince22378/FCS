@@ -407,7 +407,7 @@ class PendingVerificationsView(ListAPIView):
     permission_classes = [IsAdminUser]
 
     def get_serializer_context(self):
-        return {"request": self.request}  # 👈 Yeh important hai!
+        return {"request": self.request}  
 
 
 
