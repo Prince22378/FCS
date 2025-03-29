@@ -358,9 +358,27 @@ class AllUsersListView(generics.ListAPIView):
     queryset = Profile.objects.all()
 
 
+# @api_view(['GET'])
+# def public_profile_view(request, user_id):
+#     try:
+#         profile = Profile.objects.get(user__id=user_id)
+#         serializer = ProfileSerializer(profile)
+#         return Response(serializer.data)
+#     except Profile.DoesNotExist:
+#         return Response({"error": "User not found"}, status=404)
+
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Ensures the user is authenticated
 def public_profile_view(request, user_id):
+    if not request.user.is_authenticated:
+        # If the user is not authenticated, return generic data or a message
+        return Response({
+            'message': 'Please log in to view the profile.',
+            'image_url': '/media/default_placeholder_image.jpg'  # Example placeholder image
+        }, status=403)  # Forbidden status
+    
     try:
+        # If authenticated, fetch the profile and return the actual data
         profile = Profile.objects.get(user__id=user_id)
         serializer = ProfileSerializer(profile)
         return Response(serializer.data)
