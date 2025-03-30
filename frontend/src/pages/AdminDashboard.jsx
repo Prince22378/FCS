@@ -139,7 +139,7 @@ const AdminDashboard = () => {
                       <br />
                       {profile.govt_document ? (
                         <a
-                          href={`http://localhost:8000/api${profile.govt_document}`}
+                          href={`${api.defaults.baseURL}/api${profile.govt_document}`}
                           target="_blank"
                           rel="noreferrer"
                         >

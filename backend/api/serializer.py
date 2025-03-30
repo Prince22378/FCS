@@ -42,7 +42,7 @@ class ReactionSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=True)
+    username = serializers.CharField(source="user.profile.full_name", read_only=True)
     profile_image = serializers.SerializerMethodField()
     user = serializers.PrimaryKeyRelatedField(read_only=True)
 
@@ -54,7 +54,7 @@ class CommentSerializer(serializers.ModelSerializer):
         return obj.user.profile.image.url if obj.user.profile.image else None
 
 class PostSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
+    username = serializers.CharField(source='user.profile.full_name', read_only=True)
     profile_image = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)

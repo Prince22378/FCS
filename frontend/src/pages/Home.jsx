@@ -5,229 +5,6 @@ import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN } from "../constants";
 import "../styles/Home.css";
 
-// const Homepage = () => {
-//   const [profile, setProfile] = useState(null);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const fetchUserProfile = async () => {
-//       try {
-//         const token = localStorage.getItem(ACCESS_TOKEN);
-//         if (!token) return navigate("/login");
-
-//         const decodedToken = jwtDecode(token);
-//         const userId = decodedToken.user_id;  // Extract user_id
-
-//         // Fetch profile data using /profile/${userId}/
-//         const response = await api.get(`/api/profile/${userId}/`);
-//         setProfile(response.data);
-//       } catch (error) {
-//         console.error("Error fetching user profile", error);
-//         navigate("/login");
-//       }
-//     };
-//     fetchUserProfile();
-//   }, [navigate]);
-
-//   const handleEditProfile = () => {
-//     // Redirect to the profile edit page
-//     navigate("/edit-profile");
-//   };
-
-//   return (
-//     <div className="container mx-auto p-4">
-//       {profile ? (
-//         <div className="text-center">
-//           <img
-//             src={profile.image}
-//             alt="Profile"
-//             className="rounded-full w-32 h-32 mx-auto"
-//           />
-//           <h2 className="text-xl font-bold">{profile.full_name}</h2>
-//           <p>{profile.bio}</p>
-//           <button
-//             onClick={handleEditProfile}
-//             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-//           >
-//             Edit Profile
-//           </button>
-//         </div>
-//       ) : (
-//         <p>Loading...</p>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Homepage;
-
-// const BASE_URL = import.meta.env.VITE_API_URL
-
-// const Homepage = () => {
-//   const [profile, setProfile] = useState(null);
-//   const [friendRequests, setFriendRequests] = useState([]);
-//   const navigate = useNavigate();
-
-//   // Fetch user profile and friend requests
-//   useEffect(() => {
-//     const token = localStorage.getItem(ACCESS_TOKEN);
-//     if (!token) {
-//       navigate("/login");
-//       return;
-//     }
-
-//     try {
-//       const decodedToken = jwtDecode(token);
-//       const userId = decodedToken.user_id;
-
-//       const fetchProfile = async () => {
-//         const res = await api.get(`/api/profile/${userId}/`);
-//         setProfile(res.data);
-//       };
-
-//       const fetchFriendRequests = async () => {
-//         const res = await api.get("/api/friend-requests/");
-//         setFriendRequests(res.data);
-//       };
-
-//       fetchProfile();
-//       fetchFriendRequests();
-//     } catch (error) {
-//       console.error("Error decoding token or fetching data:", error);
-//       navigate("/login");
-//     }
-//   }, [navigate]);
-
-//   // Handle editing profile
-//   const handleEditProfile = () => {
-//     navigate("/edit-profile");
-//   };
-
-//   // Handle logout
-//   const handleLogout = () => {
-//     localStorage.removeItem(ACCESS_TOKEN);
-//     navigate("/login");
-//   };
-
-//   // Accept friend request
-//   const handleAccept = async (requestId) => {
-//     try {
-//       await api.post(`/api/friend-requests/respond/${requestId}/`, { action: "accept" });
-//       // Remove the request from local state
-//       setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
-//     } catch (err) {
-//       console.error("Error accepting friend request:", err);
-//     }
-//   };
-
-//   // Reject friend request
-//   const handleReject = async (requestId) => {
-//     try {
-//       await api.post(`/api/friend-requests/respond/${requestId}/`, { action: "reject" });
-//       // Remove the request from local state
-//       setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
-//     } catch (err) {
-//       console.error("Error rejecting friend request:", err);
-//     }
-//   };
-
-//   if (!profile) {
-//     return <p>Loading...</p>;
-//   }
-
-//   return (
-//     <div className="flex h-screen">
-//       {/* Left Sidebar */}
-//       <aside className="w-64 bg-gray-200 flex flex-col items-center py-4">
-//         <img
-//           src={`${BASE_URL}/api${profile.image}`}
-//           alt="Profile"
-//           className="rounded-full w-32 h-32 mb-2"
-//         />
-//         <h2 className="text-lg font-bold">{profile.full_name}</h2>
-//         <p className="text-sm text-gray-700">{profile.bio}</p>
-
-//         <button
-//           onClick={handleEditProfile}
-//           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-//         >
-//           Edit Profile
-//         </button>
-
-//         {/* Navigation buttons */}
-//         <nav className="mt-8 flex flex-col space-y-2">
-//           <button className="px-4 py-2 bg-gray-300 rounded">Friends</button>
-//           <button className="px-4 py-2 bg-gray-300 rounded">Chatroom</button>
-//           <button className="px-4 py-2 bg-gray-300 rounded">Marketplace</button>
-//         </nav>
-
-//         {/* Logout button at the bottom */}
-//         <button
-//           onClick={handleLogout}
-//           className="mt-auto px-4 py-2 bg-red-500 text-white rounded"
-//         >
-//           Logout
-//         </button>
-//       </aside>
-
-//       {/* Main content area */}
-//       <main className="flex-1 bg-blue-100 p-4">
-//         {/* Create Post box */}
-//         <div className="bg-white p-4 rounded shadow">
-//           <input
-//             type="text"
-//             placeholder="Create Post..."
-//             className="w-full p-2 border border-gray-300 rounded"
-//           />
-//         </div>
-
-//         {/* Example feed posts (placeholder) */}
-//         <div className="mt-4">
-//           <div className="bg-white p-4 rounded shadow mb-4">
-//             <p>Sample Post #1</p>
-//           </div>
-//           <div className="bg-white p-4 rounded shadow">
-//             <p>Sample Post #2</p>
-//           </div>
-//         </div>
-//       </main>
-
-//       {/* Right Sidebar (Friend Requests) */}
-//       <aside className="w-64 bg-gray-100 p-4">
-//         <h3 className="text-lg font-bold mb-2">Friend Requests</h3>
-//         {friendRequests.length > 0 ? (
-//           friendRequests.map((req) => (
-//             <div
-//               key={req.id}
-//               className="flex items-center justify-between mb-2 bg-white p-2 rounded shadow"
-//             >
-//               <span>{req.from_user.username}</span>
-//               <div>
-//                 <button
-//                   onClick={() => handleAccept(req.id)}
-//                   className="px-2 py-1 bg-green-500 text-white rounded mr-2"
-//                 >
-//                   ✓
-//                 </button>
-//                 <button
-//                   onClick={() => handleReject(req.id)}
-//                   className="px-2 py-1 bg-red-500 text-white rounded"
-//                 >
-//                   X
-//                 </button>
-//               </div>
-//             </div>
-//           ))
-//         ) : (
-//           <p>No friend requests</p>
-//         )}
-//       </aside>
-//     </div>
-//   );
-// };
-
-// export default Homepage;
-
 const Homepage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -255,39 +32,66 @@ const Homepage = () => {
   const [govtDoc, setGovtDoc] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState("");
 
+  // useEffect(() => {
+  //   const fetchUserProfile = async () => {
+  //     try {
+  //       const token = localStorage.getItem(ACCESS_TOKEN);
+  //       if (!token) return navigate("/login");
+
+  //       const decodedToken = jwtDecode(token);
+  //       const userId = decodedToken.user_id;
+
+  //       const response = await api.get(`/api/profile/${userId}/`);
+  //       setProfile(response.data);
+
+  //       // Fetch friend requests after getting profile
+  //       fetchFriendRequests();
+
+  //       setLoading(false);
+  //     } catch (error) {
+  //       console.error("Error fetching user profile", error);
+  //       navigate("/login");
+  //     }
+  //   };
+
+  //   // const fetchFriendRequests = async () => {
+  //   //   try {
+  //   //     const response = await api.get("/api/friend-requests/");
+  //   //     setFriendRequests(response.data); // Assuming response.data is a list of usernames or user objects
+  //   //   } catch (error) {
+  //   //     console.error("Error fetching friend requests", error);
+  //   //   }
+  //   // };
+
+  //   fetchUserProfile();
+  // }, [navigate]);
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem(ACCESS_TOKEN);
         if (!token) return navigate("/login");
-
+  
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.user_id;
-
+  
         const response = await api.get(`/api/profile/${userId}/`);
-        setProfile(response.data);
-
+        setProfile(response.data); // Update profile state with the updated username and other fields
+  
         // Fetch friend requests after getting profile
         fetchFriendRequests();
-
+  
         setLoading(false);
       } catch (error) {
         console.error("Error fetching user profile", error);
         navigate("/login");
       }
     };
-
-    // const fetchFriendRequests = async () => {
-    //   try {
-    //     const response = await api.get("/api/friend-requests/");
-    //     setFriendRequests(response.data); // Assuming response.data is a list of usernames or user objects
-    //   } catch (error) {
-    //     console.error("Error fetching friend requests", error);
-    //   }
-    // };
-
+  
     fetchUserProfile();
   }, [navigate]);
+  
+  
 
 
 
@@ -393,7 +197,7 @@ const Homepage = () => {
   const fetchPosts = async () => {
     try{
       const response = await api.get("/api/posts/");
-      console.log("Posts response:", response.data); 
+      // console.log("Posts response:", response.data); 
       setPosts(response.data);
     }catch (err) {
       console.error("Error fetching posts", err);

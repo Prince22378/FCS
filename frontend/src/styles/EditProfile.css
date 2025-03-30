@@ -1,5 +1,5 @@
 /* EditProfile.css */
-.edit-profile-container {
+/* .edit-profile-container {
     max-width: 600px;
     margin: 2rem auto;
     padding: 2rem;
@@ -89,4 +89,125 @@
 
 .edit-profile-button:hover {
     background-color: #2c5282;
+} */
+
+
+
+/* Container Style */
+.edit-profile-container {
+    max-width: 500px; /* Adjusting width for better form fit */
+    width: 100%; /* Ensure full width on smaller screens */
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #f4f7fb; /* Light blue background */
+    box-sizing: border-box; /* Ensure proper padding calculation */
+}
+
+/* Heading Style */
+.edit-profile-heading {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2d3748; /* Dark gray text color */
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* Form Layout */
+.edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Label Style */
+.edit-profile-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+/* Input Field Styles */
+.edit-profile-input,
+.edit-profile-textarea,
+.edit-profile-file-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #2d3748;
+    background-color: #f7fafc;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Focus State */
+.edit-profile-input:focus,
+.edit-profile-textarea:focus,
+.edit-profile-file-input:focus {
+    border-color: #3182ce;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+}
+
+/* Textarea */
+.edit-profile-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* File Input */
+.edit-profile-file-input {
+    cursor: pointer;
+}
+
+.edit-profile-file-input::file-selector-button {
+    padding: 0.5rem 1rem;
+    background-color: #edf2f7;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #4a5568;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.edit-profile-file-input::file-selector-button:hover {
+    background-color: #e2e8f0;
+}
+
+/* Button Style */
+.edit-profile-button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.edit-profile-button:hover {
+    background-color: #2c5282;
+}
+
+/* Profile Image Preview Container */
+.profile-image-preview-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.profile-image-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
 }
