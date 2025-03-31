@@ -1,6 +1,6 @@
 from django.conf import settings
 import requests
-from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction, Report
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction, Report, Group, GroupMessage
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
@@ -281,3 +281,27 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = ['id', 'post', 'user', 'reason', 'created_at']
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name', 'bio', 'image', 'members', 'created_by', 'created_at']
+
+    def create(self, validated_data):
+        group = Group.objects.create(
+            name=validated_data['name'],
+            bio=validated_data.get('bio', ''),
+            created_by=validated_data['created_by']
+        )
+        group.members.add(validated_data['created_by'])  # The creator is automatically added
+        return group
+
+
+# serializers.py
+class GroupMessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer()
+
+    class Meta:
+        model = GroupMessage
+        fields = ['sender', 'content', 'media', 'created_at']

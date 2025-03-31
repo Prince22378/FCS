@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost
+from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView 
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -53,6 +53,10 @@ urlpatterns = [
     path("all-users/", views.AllUsersListView.as_view(), name="all_users"),
     path("profile/<int:user_id>/verify/", views.ProfileVerificationUploadView.as_view(), name="upload_govt_doc"),
 
+    path('create-group/', views.CreateGroupView.as_view(), name='create_group'),
+    path('groups/', GroupListView.as_view(), name='group_list'),
+
+    path('groups/<int:group_id>/messages/', GroupChatMessageView.as_view()),
 
     path('report/', ReportPostView.as_view(), name='report_post'),
     path('admin/reports/', ReportListView.as_view(), name='admin_reports'),

@@ -22,8 +22,8 @@ from django.shortcuts import get_object_or_404
 
 
 from rest_framework.generics import ListAPIView
-from api.models import Comment, Report
-from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer, ReportSerializer
+from api.models import Comment, Report, Group, GroupMessage
+from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer, ReportSerializer, GroupSerializer, GroupMessageSerializer
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -512,3 +512,98 @@ class ReportListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Report.objects.all().order_by('-created_at')  # Order by the most recent reports
+
+
+# class CreateGroupView(generics.CreateAPIView):
+#     serializer_class = GroupSerializer
+#     # permission_classes = [IsAuthenticated]
+
+#     def perform_create(self, serializer):
+#         serializer.save(created_by=self.request.user)
+
+# class CreateGroupView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         data = request.data
+#         group_name = request.data.get('name')
+#         group_bio = request.data.get('bio')
+#         members = request.data.get('members')
+        
+#         if not members:
+#             return Response({"error": "Group must have at least one member."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Add the creator (current user) to the members list
+#         members.append(request.user.id)
+        
+#         group = Group.objects.create(name=group_name, bio=group_bio, created_by=request.user)
+
+#         # Your other logic to create a group
+#         group.members.set(members)
+
+#         # Save the group instance
+#         group.save()
+
+#         # Return a success response
+#         return Response(GroupSerializer(group).data, status=status.HTTP_201_CREATED)
+
+class CreateGroupView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        name = request.data.get("name")
+        bio = request.data.get("bio")
+        members = request.data.getlist("members")
+        image = request.FILES.get("image")
+
+        if not members:
+            return Response({"error": "Group must have at least one member."}, status=400)
+
+        members = list(set(members + [str(request.user.id)]))
+
+        group = Group.objects.create(
+            name=name,
+            bio=bio,
+            image=image,
+            created_by=request.user
+        )
+        group.members.set(members)
+        return Response(GroupSerializer(group).data, status=201)
+
+
+class GroupListView(ListAPIView):
+    serializer_class = GroupSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Group.objects.filter(members=self.request.user)
+
+
+# views.py
+class GroupChatMessageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, group_id):
+        # Fetch messages for a group
+        group = get_object_or_404(Group, id=group_id)
+        messages = group.messages.all().order_by('created_at')
+        serializer = GroupMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, group_id):
+        # Send a new message to the group
+        group = get_object_or_404(Group, id=group_id)
+        content = request.data.get("content")
+        media = request.FILES.get("media")
+
+        if not content and not media:
+            return Response({"error": "Content or media required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        message = GroupMessage.objects.create(
+            group=group,
+            sender=request.user,
+            content=content,
+            media=media
+        )
+        return Response(GroupMessageSerializer(message).data, status=status.HTTP_201_CREATED)
