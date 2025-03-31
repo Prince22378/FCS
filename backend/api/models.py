@@ -132,3 +132,15 @@ class EmailOTP(models.Model):
 
     def __str__(self):
         return f"{self.email} - {self.otp}"
+
+
+class Report(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reports")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # The user reporting
+    reason = models.CharField(max_length=255)  # Reason for reporting (e.g., Spam, Abusive, etc.)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, default="pending", choices=[("pending", "Pending"), ("resolved", "Resolved"), ("taken_down", "Taken Down")])
+
+    def __str__(self):
+        return f"Report by {self.user.username} on Post {self.post.id} for {self.reason}"
+

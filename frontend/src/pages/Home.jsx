@@ -32,6 +32,17 @@ const Homepage = () => {
   const [govtDoc, setGovtDoc] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState("");
 
+  const [showReportOverlay, setShowReportOverlay] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [selectedPostId, setSelectedPostId] = useState(null);
+
+  const reportReasons = [
+    "Spam",
+    "Abusive Content",
+    "Inappropriate Image",
+    "Hate Speech",
+    "Other",
+  ];
   // useEffect(() => {
   //   const fetchUserProfile = async () => {
   //     try {
@@ -305,6 +316,42 @@ const Homepage = () => {
   };
   
     
+  const handleReportPost = (postId) => {
+    setSelectedPostId(postId);
+    setShowReportOverlay(true);
+  };
+
+  const handleCloseReportOverlay = () => {
+    setShowReportOverlay(false);
+    setReportReason(""); // Reset the reason
+  };
+
+  const handleReportSubmit = async () => {
+    if (!reportReason) {
+      alert("Please select a reason for reporting.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem(ACCESS_TOKEN);
+      await api.post(
+        "/api/report/",
+        { post: selectedPostId, reason: reportReason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Report submitted successfully!");
+      handleCloseReportOverlay(); // Close the overlay after successful submission
+    } catch (error) {
+      console.error("Error submitting report", error);
+      alert("Failed to submit the report.");
+    }
+  };
+
   if (loading) {
     return <p className="loading">Loading...</p>;
   }
@@ -451,7 +498,7 @@ const Homepage = () => {
                     )}
                     <button
                       className="post-menu-item report"
-                      onClick={() => alert("Post reported!")}
+                      onClick={() => handleReportPost(post.id)}
                     >
                       🚩 Report
                     </button>
@@ -677,6 +724,32 @@ const Homepage = () => {
             <button onClick={handleVerifySubmit} className="send-request-button">
               Submit for Verification
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report Overlay */}
+      {showReportOverlay && (
+        <div className="overlay-backdrop">
+          <div className="report-overlay">
+            <h3>Report Post</h3>
+            <label>Select a reason:</label>
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+            >
+              <option value="">-- Select a reason --</option>
+              {reportReasons.map((reason, index) => (
+                <option key={index} value={reason}>
+                  {reason}
+                </option>
+              ))}
+            </select>
+
+            <div className="report-actions">
+              <button onClick={handleReportSubmit}>Submit Report</button>
+              <button onClick={handleCloseReportOverlay}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

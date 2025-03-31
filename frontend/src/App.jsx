@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import FriendPage from './pages/FriendPage';
 import ChatroomPage from "./pages/ChatRoomPage.jsx";
+import ReportsLogs from "./pages/ReportsLogs"; 
 
 function Logout() {
   localStorage.clear();
@@ -45,6 +46,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports_logs"  
+          element={
+            <ProtectedRoute>
+              <ReportsLogs />
             </ProtectedRoute>
           }
         />

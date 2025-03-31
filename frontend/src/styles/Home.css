@@ -1,5 +1,5 @@
 /* === Force full width on root === */
-html, body, #root {
+  html, body, #root {
     margin: 0;
     padding: 0;
     height: 100%;
@@ -538,3 +538,49 @@ html, body, #root {
     cursor: pointer;
   }
   
+  /* Overlay for reporting */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.report-overlay {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.report-overlay select {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.report-actions button {
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.report-actions button:hover {
+  background-color: #2c5282;
+}

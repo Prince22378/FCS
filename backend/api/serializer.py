@@ -1,6 +1,6 @@
 from django.conf import settings
 import requests
-from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction, Report
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
@@ -274,3 +274,10 @@ class VerificationPendingProfileSerializer(serializers.ModelSerializer):
             return f"/api{obj.govt_document.url}"  # 👈 Important
         return None
 
+
+class ReportSerializer(serializers.ModelSerializer):
+    post = PostSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = Report
+        fields = ['id', 'post', 'user', 'reason', 'created_at']

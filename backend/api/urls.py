@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, LimitedCommentsView, AllCommentsView
+from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -54,6 +54,10 @@ urlpatterns = [
     path("profile/<int:user_id>/verify/", views.ProfileVerificationUploadView.as_view(), name="upload_govt_doc"),
 
 
+    path('report/', ReportPostView.as_view(), name='report_post'),
+    path('admin/reports/', ReportListView.as_view(), name='admin_reports'),
+    path('admin/resolve-report/<int:report_id>/', views.ResolveReport.as_view(), name="resolve_report"),
+    path('admin/take-down-post/<int:report_id>/', views.TakeDownPost.as_view(), name="take_down_post"),
 
     path('public-profile/<int:user_id>/', views.public_profile_view),
 

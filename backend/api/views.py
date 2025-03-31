@@ -22,8 +22,8 @@ from django.shortcuts import get_object_or_404
 
 
 from rest_framework.generics import ListAPIView
-from api.models import Comment
-from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer
+from api.models import Comment, Report
+from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer, ReportSerializer
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -439,3 +439,76 @@ def upload_verification_doc(request):
     profile.verified_doc = request.FILES['document']
     profile.save()
     return Response({'message': 'Document uploaded, awaiting admin verification.'})
+
+
+
+class ReportPostView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        post_id = request.data.get('post')  # The post ID being reported
+        reason = request.data.get('reason')  # The reason for reporting
+
+        if not post_id or not reason:
+            return Response({"error": "Post ID and reason are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create the report object
+        report = Report.objects.create(
+            post=post,
+            user=request.user,
+            reason=reason,
+            status="pending"
+        )
+
+        return Response({"message": "Report submitted successfully."}, status=status.HTTP_201_CREATED)
+
+class ResolveReport(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, report_id):
+        try:
+            report = Report.objects.get(id=report_id)
+            # Mark the report as resolved
+            report.status = 'resolved'  # Add a status field to your Report model if not present
+            report.save()
+
+            return Response({"message": "Report resolved successfully."}, status=status.HTTP_200_OK)
+        except Report.DoesNotExist:
+            return Response({"error": "Report not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class TakeDownPost(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, report_id):
+        try:
+            report = Report.objects.get(id=report_id)
+            post = report.post 
+            post.delete()  # Take down the post by deleting it
+
+            # Mark the report as taken down (we could also add a status field in the report model to track this)
+            report.status = 'taken_down'
+            report.save()
+
+            # Return a success response
+            return Response({"message": "Post has been taken down successfully."}, status=status.HTTP_200_OK)
+
+        except Report.DoesNotExist:
+            return Response({"error": "Report not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class ReportListView(generics.ListAPIView):
+    permission_classes = [IsAdminUser]  # Ensure only admins can access this view
+    serializer_class = ReportSerializer
+
+    def get_queryset(self):
+        return Report.objects.all().order_by('-created_at')  # Order by the most recent reports
