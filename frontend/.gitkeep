@@ -1,0 +1,4 @@
+touch backend/media/chat_media/.gitkeep
+touch backend/media/govt_docs/.gitkeep
+touch backend/media/posts/.gitkeep
+touch backend/media/user_images/.gitkeep
