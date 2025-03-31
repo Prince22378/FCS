@@ -1,11 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { ACCESS_TOKEN, REFRESH_TOKEN, PRIVATE_KEY } from "../constants";
 import "../styles/Form.css";
 import LoadingIndicator from "./LoadingIndicator";
 import loginImage from "../assets/login_welcome.png";
 import registerImage from "../assets/register_welcome.png";
+
+// Function to derive private key from password
+async function derivePrivateKey(password) {
+  const encoder = new TextEncoder();
+  const passwordBuffer = encoder.encode(password);
+
+  // Hash the password using SHA-256
+  const hashedBuffer = await crypto.subtle.digest("SHA-256", passwordBuffer);
+
+  // Convert hashed buffer to a hex string
+  return Array.from(new Uint8Array(hashedBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 function Form({ route, method }) {
   const [email, setEmail] = useState("");
@@ -27,11 +41,14 @@ function Form({ route, method }) {
     }
 
     try {
-      // console.log(username, password);
       const res = await api.post(route, { email, password });
       if (method === "login") {
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
         localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+
+        const privateKey = await derivePrivateKey(password);
+        localStorage.setItem(PRIVATE_KEY, privateKey); // Store private key in hex format
+        // console.log("Derived Private Key (Hex):", privateKey); // Debugging output
         navigate("/");
       } else {
         navigate("/login");

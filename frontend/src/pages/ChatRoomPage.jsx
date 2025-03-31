@@ -2,6 +2,12 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import api from "../api";
+import { ACCESS_TOKEN, PRIVATE_KEY } from "../constants";
+import { ec as EC } from "elliptic"; // Elliptic Curve Crypto
+import "../styles/ChatRoomPage.css";  
+
+const ec = new EC("p256"); // Using P-256 Curve
+
 import { ACCESS_TOKEN } from "../constants";
 import "../styles/ChatRoomPage.css";
 import GroupChat from "./GroupChat"; // ✅ Make sure this path is correct
@@ -24,7 +30,17 @@ const ChatroomPage = () => {
   const [friendsList, setFriendsList] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [groups, setGroups] = useState([]);
+  const [friendPublicKey, setFriendPublicKey] = useState(null);
+  const [privateKeyHex, setPrivateKeyHex] = useState("");
   const isFetchingRef = useRef(false);
+
+
+  // Convert HEX to Uint8Array
+  const hexToUint8Array = (hex) => new Uint8Array(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+
+  // Convert Uint8Array to HEX
+  const uint8ArrayToHex = (uint8Array) =>
+    Array.from(uint8Array).map((b) => b.toString(16).padStart(2, "0")).join("");
 
   const formatTime = (dateString) => {
     try {
@@ -56,6 +72,11 @@ const ChatroomPage = () => {
       console.error("Invalid token", err);
       navigate("/login");
     }
+    // Load stored private key
+    const storedPrivateKey = localStorage.getItem(PRIVATE_KEY);
+    if (storedPrivateKey) {
+      setPrivateKeyHex(storedPrivateKey);
+    }
   }, [navigate]);
 
   useEffect(() => {
@@ -73,6 +94,19 @@ const ChatroomPage = () => {
   useEffect(() => {
     friends.forEach((f) => f.user?.id && fetchFriendImage(f.user.id));
   }, [friends]);
+
+  useEffect(() => {
+    if (!selectedFriend) return;
+    const fetchPublicKey = async () => {
+      try {
+        const res = await api.get(`/api/public-profile/${selectedFriend.user.id}/`);
+        setFriendPublicKey(res.data.public_key); // Public key in HEX format
+      } catch (err) {
+        console.error("Error fetching public key", err);
+      }
+    };
+    fetchPublicKey();
+  }, [selectedFriend]);
 
   const fetchMessages = async () => {
     if (!selectedFriend || !currentUserId || isFetchingRef.current) return;
@@ -105,6 +139,25 @@ const ChatroomPage = () => {
     };
   }, [selectedFriend, currentUserId]);
 
+  // Encrypt Message
+  const encryptMessage = (message, publicKeyHex) => {
+    if (!publicKeyHex) return null;
+    const key = ec.keyFromPublic(publicKeyHex, "hex");
+    const msgHex = uint8ArrayToHex(new TextEncoder().encode(message));
+    return key.getPublic().mul(new EC("p256").genKeyPair().priv).encode("hex", { compressed: true }) + msgHex;
+  };
+
+  // Decrypt Message
+  const decryptMessage = (encryptedMessage) => {
+    if (!privateKeyHex) return null;
+    const key = ec.keyFromPrivate(privateKeyHex, "hex");
+    const encryptedHex = encryptedMessage.substring(0, 66);
+    const encryptedKey = ec.keyFromPublic(encryptedHex, "hex");
+    const sharedSecret = encryptedKey.getPublic().mul(key.getPrivate());
+    const decryptedBuffer = hexToUint8Array(encryptedMessage.substring(66));
+    return new TextDecoder().decode(decryptedBuffer);
+  };
+
   const handleSend = async () => {
     // Do not send if both message and media are empty
     if (!newMessage.trim() && !mediaFile) return;
@@ -114,8 +167,8 @@ const ChatroomPage = () => {
     formData.append("reciever", selectedFriend.user.id);
   
     // If there's a message, include it
-    if (newMessage.trim()) {
-      formData.append("message", newMessage.trim());
+    if (newMessage.trim() && friendPublicKey) {
+      formData.append("message", encryptMessage(newMessage.trim(), friendPublicKey));
     }
   
     // If there's a media file, include it
@@ -275,7 +328,7 @@ const ChatroomPage = () => {
               const isMe = String(msg.sender?.id || msg.sender) === String(currentUserId);
               return (
                 <div key={i} className={`chat-message ${isMe ? "sent" : "received"}`}>
-                  {msg.message && <div>{msg.message}</div>}
+                  {msg.message && <div>{decryptMessage(msg.message) || "[Encrypted]"}</div>}
                   {msg.media && (
                     msg.media.endsWith(".mp4") ? (
                       <video src={`${api.defaults.baseURL}/api${msg.media}`} controls />
