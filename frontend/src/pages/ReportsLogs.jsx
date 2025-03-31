@@ -3,7 +3,7 @@ import api from "../api"; // Ensure you have the correct API import
 import "../styles/ReportsLogs.css"; // Reusing styles
 
 const ReportsLogs = () => {
-  const [reports, setReports] = useState([]);  // For active reports
+  const [activeReports, setActiveReports] = useState([]);  // For active reports
   const [resolvedReports, setResolvedReports] = useState([]);  // For resolved reports
   const [takedownReports, setTakedownReports] = useState([]);  // For taken down reports
   const [loading, setLoading] = useState(true);
@@ -20,16 +20,18 @@ const ReportsLogs = () => {
     api.get("/api/admin/reports/") // Your endpoint for fetching reports
       .then((response) => {
         // Filter reports into pending, resolved, and taken_down
-        setReports(response.data);
-        // const activeReports = response.data.filter(report => report.status === "pending");
+        console.log(response.data);
+        // setReports(response.data);
+        const activeReports = response.data.filter(report => report.status === "pending");
         const resolvedReports = response.data.filter(report => report.status === "resolved");
         const takedownReports = response.data.filter(report => report.status === "taken_down");
 
         // Set the reports into their respective categories
-        // setReports(activeReports); // Set active reports
+        setActiveReports(activeReports); // Set active reports
         setResolvedReports(resolvedReports); // Set resolved reports
         setTakedownReports(takedownReports); // Set taken down reports
         setLoading(false);
+        console.log(activeReports);
       })
       .catch((error) => {
         console.error("Error fetching reports:", error);
@@ -44,12 +46,12 @@ const ReportsLogs = () => {
         setResolveMessage("Report resolved successfully!");
 
         // Remove resolved report from active list
-        setReports((prevReports) => prevReports.filter((report) => report.id !== reportId));
+        // setReports((prevReports) => prevReports.filter((report) => report.id !== reportId));
 
         // Optionally, you could fetch the resolved report and add it to resolvedReports
-        const resolvedReport = reports.find((report) => report.id === reportId);
-        setResolvedReports((prevResolved) => [...prevResolved, resolvedReport]);
-
+        // const resolvedReport = reports.find((report) => report.id === reportId);
+        // setResolvedReports((prevResolved) => [...prevResolved, resolvedReport]);
+        fetchReports();
         setOverlayVisible(false); // Close the overlay after action
       })
       .catch((error) => {
@@ -74,7 +76,7 @@ const ReportsLogs = () => {
 
   // Handle report click to view details
   const handleReportClick = (reportId) => {
-    const selected = reports.find((report) => report.id === reportId);
+    const selected = activeReports.find((report) => report.id === reportId);
     setSelectedReport(selected);
     setOverlayVisible(true); // Show the overlay when a report is clicked
   };
@@ -107,9 +109,9 @@ const ReportsLogs = () => {
             <div>
               {/* Active Reports Section */}
               <h3>Active Reports</h3>
-              {reports.length > 0 ? (
+              {activeReports.length > 0 ? (
                 <ul className="user-list">
-                  {reports.map((report) => (
+                  {activeReports.map((report) => (
                     <li key={report.id}>
                       <div>
                         <strong>Reported Post:</strong>
@@ -153,7 +155,7 @@ const ReportsLogs = () => {
                 <ul className="user-list">
                   {takedownReports.map((report) => (
                     <li key={report.id}>
-                      <strong>{report.post.caption}</strong>
+                      <strong>{`Post by ${report.user.username} `}</strong>
                       <span> - Taken Down</span>
                     </li>
                   ))}

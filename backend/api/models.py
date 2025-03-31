@@ -135,7 +135,7 @@ class EmailOTP(models.Model):
 
 
 class Report(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reports")
+    post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # The user reporting
     reason = models.CharField(max_length=255)  # Reason for reporting (e.g., Spam, Abusive, etc.)
     created_at = models.DateTimeField(auto_now_add=True)
