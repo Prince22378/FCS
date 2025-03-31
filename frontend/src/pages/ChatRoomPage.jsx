@@ -165,7 +165,8 @@ const ChatroomPage = () => {
     const formData = new FormData();
     formData.append("sender", currentUserId);
     formData.append("reciever", selectedFriend.user.id);
-  
+    console.log("Selected Friend: ", selectedFriend);
+
     // If there's a message, include it
     if (newMessage.trim() && friendPublicKey) {
       formData.append("message", encryptMessage(newMessage.trim(), friendPublicKey));
@@ -321,6 +322,9 @@ const ChatroomPage = () => {
         </div>
 
         <div className="chat-body">
+        {/* console.log("Message to send: ", newMessage);
+        console.log("Receiver: ", selectedFriend.user.id); */}
+
           {selectedGroup ? (
             <GroupChat selectedGroup={selectedGroup} currentUserId={currentUserId} />
           ) : selectedFriend ? (
@@ -329,13 +333,17 @@ const ChatroomPage = () => {
               return (
                 <div key={i} className={`chat-message ${isMe ? "sent" : "received"}`}>
                   {msg.message && <div>{decryptMessage(msg.message) || "[Encrypted]"}</div>}
+
                   {msg.media && (
-                    msg.media.endsWith(".mp4") ? (
-                      <video src={`${api.defaults.baseURL}/api${msg.media}`} controls />
-                    ) : (
-                      <img src={`${api.defaults.baseURL}/api${msg.media}`} alt="media" />
-                    )
+                    <div className="media-container">
+                      {msg.media.endsWith(".mp4") ? (
+                        <video src={`${api.defaults.baseURL}/api${msg.media}`} controls />
+                      ) : (
+                        <img src={`${api.defaults.baseURL}/api${msg.media}`} alt="media" />
+                      )}
+                    </div>
                   )}
+
                   <div className="chat-meta">
                     <small>{formatTime(msg.date)}</small>
                   </div>
