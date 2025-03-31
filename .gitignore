@@ -40,7 +40,15 @@ backend/media/*
 !backend/media/govt_docs/
 !backend/media/posts/
 !backend/media/user_images/
+
+backend/media/chat_media/*
 !backend/media/chat_media/.gitkeep
+
+backend/media/govt_docs/*
 !backend/media/govt_docs/.gitkeep
+
+backend/media/posts/*
 !backend/media/posts/.gitkeep
+
+backend/media/user_images/*
 !backend/media/user_images/.gitkeep
