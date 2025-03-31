@@ -29,6 +29,7 @@ class Profile(models.Model):
     is_verification_pending = models.BooleanField(default=False)
     govt_document = models.FileField(upload_to='govt_docs/', null=True, blank=True)
     friends = models.ManyToManyField('self', symmetrical=True, blank=True)
+    public_key = models.TextField(blank=True, null=True) 
 
     def __str__(self):
         return self.full_name

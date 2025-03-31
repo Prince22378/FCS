@@ -7,6 +7,50 @@ import { Link } from "react-router-dom";
 import registerImage from "../assets/register_welcome.png";
 import ReCAPTCHA from "react-google-recaptcha";
 
+// Function to derive private key from password
+async function derivePrivateKey(password) {
+  const encoder = new TextEncoder();
+  const passwordBuffer = encoder.encode(password);
+
+  // Hash the password using SHA-256
+  const hashedBuffer = await crypto.subtle.digest("SHA-256", passwordBuffer);
+
+  return hashedBuffer; // This will be used as the private key
+}
+
+// Function to generate public key from private key (ECDSA)
+import { ec as EC } from "elliptic";
+
+const ec = new EC("p256"); // P-256 (same as "prime256v1")
+
+async function generatePublicKey(privateKeyBuffer) {
+  try {
+    // console.log("Private Key Buffer:", privateKeyBuffer);
+
+    // Convert ArrayBuffer to hex string
+    const privateKeyHex = Array.from(new Uint8Array(privateKeyBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // console.log("Private Key Hex:", privateKeyHex);
+
+    // Generate key pair from private key
+    const key = ec.keyFromPrivate(privateKeyHex, "hex");
+
+    // Get public key in hex format
+    const publicKeyHex = key.getPublic("hex");
+
+    // console.log("Public Key Hex:", publicKeyHex);
+
+    return { publicKey: publicKeyHex };
+  } catch (error) {
+    console.error("Error in generateKeyPair:", error);
+    throw error;
+  }
+}
+
+
+
 function Register() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -84,12 +128,20 @@ function Register() {
     e.preventDefault();
     setLoading(true);
     try {
+      // Derive private key from password
+      const privateKeyBuffer = await derivePrivateKey(password);
+
+      // Generate public key
+      // console.log(privateKeyBuffer);
+      const { publicKey } = await generatePublicKey(privateKeyBuffer);
+      // console.log(publicKey);
       await api.post("/api/register/", {
         email,
         username,
         password,
         password2,
         otp,
+        public_key: publicKey,
       });
       alert("Registration successful!");
       navigate("/login");

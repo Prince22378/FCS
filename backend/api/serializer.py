@@ -105,10 +105,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
+    public_key = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'password2')
+        fields = ('email', 'username', 'password', 'password2', 'public_key')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -118,6 +119,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        public_key = validated_data.pop('public_key')
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email']
@@ -127,6 +129,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
 
+        profile = Profile.objects.get(user=user)
+        profile.public_key = public_key
+        profile.save()
+
         return user
     
 # A simple serializer for friend details
@@ -134,7 +140,7 @@ class SimpleProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     class Meta:
         model = Profile
-        fields = ['id', 'full_name', 'user', 'image']
+        fields = ['id', 'full_name', 'user', 'image', 'public_key']
 
     
 class ProfileSerializer(serializers.ModelSerializer):
@@ -143,7 +149,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified', 'friends', 'govt_document', 'is_verification_pending' ]
+        fields = [ 'id',  'user',  'full_name', 'bio', 'image', 'verified', 'friends', 'govt_document', 'is_verification_pending', 'public_key' ]
     
     def __init__(self, *args, **kwargs):
         super(ProfileSerializer, self).__init__(*args, **kwargs)
