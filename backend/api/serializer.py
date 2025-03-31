@@ -286,7 +286,7 @@ class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
         model = Report
-        fields = ['id', 'post', 'user', 'reason', 'created_at']
+        fields = ['id', 'post', 'user', 'reason', 'created_at', 'status']
 
 
 class GroupSerializer(serializers.ModelSerializer):
