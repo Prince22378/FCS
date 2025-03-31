@@ -488,12 +488,12 @@ class TakeDownPost(APIView):
     def post(self, request, report_id):
         try:
             report = Report.objects.get(id=report_id)
+            report.status = 'taken_down'
+            report.save()
             post = report.post 
             post.delete()  # Take down the post by deleting it
 
             # Mark the report as taken down (we could also add a status field in the report model to track this)
-            report.status = 'taken_down'
-            report.save()
 
             # Return a success response
             return Response({"message": "Post has been taken down successfully."}, status=status.HTTP_200_OK)
