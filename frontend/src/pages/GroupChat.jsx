@@ -176,6 +176,13 @@ const GroupChat = ({ selectedGroup, currentUserId }) => {
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => {
+            // Check if the Enter key is pressed and Shift key is not pressed
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // Prevent the Enter key from inserting a newline
+              handleSend(); // Send the message or media
+            }
+          }}
         />
         <input
           type="file"
