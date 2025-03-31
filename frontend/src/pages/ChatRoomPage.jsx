@@ -131,13 +131,12 @@
 
 // // // export default ChatroomPage;
 
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import api from "../api";
 import { ACCESS_TOKEN } from "../constants";
-import "../styles/ChatRoomPage.css";
+import "../styles/ChatRoomPage.css";  // Assuming you have a separate CSS file for chat styling
 
 const ChatroomPage = () => {
   const navigate = useNavigate();
@@ -242,27 +241,49 @@ const ChatroomPage = () => {
   }, [selectedFriend, currentUserId]);
 
   const handleSend = async () => {
+    // Do not send if both message and media are empty
     if (!newMessage.trim() && !mediaFile) return;
-
+  
     const formData = new FormData();
     formData.append("sender", currentUserId);
     formData.append("reciever", selectedFriend.user.id);
-    formData.append("message", newMessage);
-    if (mediaFile) formData.append("media", mediaFile);
-
+  
+    // If there's a message, include it
+    if (newMessage.trim()) {
+      formData.append("message", newMessage.trim());
+    }
+  
+    // If there's a media file, include it
+    if (mediaFile) {
+      formData.append("media", mediaFile);
+    }
+  
     try {
       const res = await api.post("/api/send-messages/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
+
+      if (newMessage.trim()) {
+        formData.append("message", newMessage.trim());
+      }
+    
+      // If there's a media file, include it
+      if (mediaFile) {
+        formData.append("media", mediaFile);
+      }
+
+  
+      // Add the sent message (or media) to the chat window
       setMessages((prev) => [...prev, res.data]);
-      setNewMessage("");
-      setMediaFile(null);
+      setNewMessage(""); // Clear the message input field
+      setMediaFile(null); // Clear the media file input
     } catch (err) {
       console.error("Error sending message", err);
     }
   };
+
 
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
@@ -365,32 +386,42 @@ const ChatroomPage = () => {
 
         {selectedFriend && (
           <div className="chat-input-container">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={newMessage}
-              onChange={handleTyping}
-            />
-            <input
-              type="file"
-              accept="image/*,video/*"
-              onChange={(e) => setMediaFile(e.target.files[0])}
-            />
-            <button className="send-btn" onClick={handleSend}>Send</button>
-
-            {mediaFile && (
-              <div className="media-preview-wrapper">
-                <div className="media-preview-inner">
-                  <button className="remove-media" onClick={() => setMediaFile(null)}>✕</button>
-                  {mediaFile.type.startsWith("image/") ? (
-                    <img src={URL.createObjectURL(mediaFile)} alt="preview" />
-                  ) : (
-                    <video src={URL.createObjectURL(mediaFile)} controls />
-                  )}
-                </div>
+          <input
+            type="text"
+            placeholder="Type a message..."
+            value={newMessage}
+            onChange={handleTyping}
+            onKeyDown={(e) => {
+              // Check if the Enter key is pressed
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault(); // Prevent the Enter key from inserting a newline
+                handleSend(); // Send the message or media
+              }
+            }}
+          />
+          
+          <input
+            type="file"
+            accept="image/*,video/*"
+            onChange={(e) => setMediaFile(e.target.files[0])} // Set selected media file
+          />
+          
+          <button className="send-btn" onClick={handleSend}>Send</button>
+        
+          {mediaFile && (
+            <div className="media-preview-wrapper">
+              <div className="media-preview-inner">
+                <button className="remove-media" onClick={() => setMediaFile(null)}>✕</button>
+                {mediaFile.type.startsWith("image/") ? (
+                  <img src={URL.createObjectURL(mediaFile)} alt="preview" />
+                ) : (
+                  <video src={URL.createObjectURL(mediaFile)} controls />
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
+        
         )}
       </div>
     </div>
