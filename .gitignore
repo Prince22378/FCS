@@ -7,6 +7,8 @@ __pycache__/
 
 # Virtual environment
 venv/
+env/
+my_env/
 .env/
 .venv/
 Pipfile
@@ -30,3 +32,11 @@ pnpm-lock.yaml
 .idea/
 .DS_Store
 Thumbs.db
+
+#media
+backend/media/*
+!backend/media/default.jpg
+!backend/media/chat_media/.gitkeep
+!backend/media/govt_docs/.gitkeep
+!backend/media/posts/.gitkeep
+!backend/media/user_images/.gitkeep

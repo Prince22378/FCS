@@ -7,13 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-env/
-backend/media/*
-!backend/media/default.jpg
-!backend/media/chat_media/.gitkeep
-!backend/media/govt_docs/.gitkeep
-!backend/media/posts/.gitkeep
-!backend/media/user_images/.gitkeep
 node_modules
 dist
 dist-ssr
