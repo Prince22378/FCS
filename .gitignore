@@ -36,6 +36,10 @@ Thumbs.db
 #media
 backend/media/*
 !backend/media/default.jpg
+!backend/media/chat_media/
+!backend/media/govt_docs/
+!backend/media/posts/
+!backend/media/user_images/
 !backend/media/chat_media/.gitkeep
 !backend/media/govt_docs/.gitkeep
 !backend/media/posts/.gitkeep
