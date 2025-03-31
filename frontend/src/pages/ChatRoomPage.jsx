@@ -8,7 +8,7 @@ import "../styles/ChatRoomPage.css";
 
 const ec = new EC("p256"); // Using P-256 Curve
 
-import { ACCESS_TOKEN } from "../constants";
+// import { ACCESS_TOKEN } from "../constants";
 import "../styles/ChatRoomPage.css";
 import GroupChat from "./GroupChat"; // ✅ Make sure this path is correct
 
@@ -383,6 +383,61 @@ const ChatroomPage = () => {
             )}
           </div>
         )}
+        {showGroupOverlay && currentStep === 1 && (
+    <div className="overlay">
+        <div className="overlay-content">
+            <h2>Create Group</h2>
+            <input
+                type="text"
+                placeholder="Enter Group Name"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                className="group-input"
+            />
+            <textarea
+                placeholder="Enter Group Bio"
+                value={groupBio}
+                onChange={(e) => setGroupBio(e.target.value)}
+                className="group-input"
+            />
+            <div className="overlay-actions">
+                <button onClick={() => setShowGroupOverlay(false)}>Cancel</button>
+                <button onClick={() => setCurrentStep(2)}>Next</button>
+            </div>
+        </div>
+    </div>
+)}
+
+{showGroupOverlay && currentStep === 2 && (
+    <div className="overlay">
+        <div className="overlay-content">
+            <h2>Select Members</h2>
+            <div className="friends-list">
+                {friendsList.map((friend) => (
+                    <div key={friend.id} className="friend-item">
+                        <input
+                            type="checkbox"
+                            id={friend.id}
+                            onChange={() => {
+                                setSelectedMembers((prevState) =>
+                                    prevState.includes(friend.id)
+                                        ? prevState.filter((id) => id !== friend.id)
+                                        : [...prevState, friend.id]
+                                );
+                            }}
+                        />
+                        <label htmlFor={friend.id}>{friend.full_name}</label>
+                    </div>
+                ))}
+            </div>
+            <div className="overlay-actions">
+                <button onClick={() => setCurrentStep(1)}>Back</button>
+                <button onClick={handleCreateGroup}>Create Group</button>
+            </div>
+        </div>
+    </div>
+)}
+
       </div>
     </div>
   );
