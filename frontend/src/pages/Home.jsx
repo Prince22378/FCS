@@ -4,6 +4,7 @@ import api from "../api";
 import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN } from "../constants";
 import "../styles/Home.css";
+import { Link } from "react-router-dom";
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -118,7 +119,7 @@ const Homepage = () => {
 
     fetchPosts();
   }, []);
-  
+
   const handleEditProfile = () => navigate("/edit-profile");
   const handleLogout = () => navigate("/logout");
   const handleFriendPage = () => navigate("/friends");
@@ -142,11 +143,11 @@ const Homepage = () => {
       setError("Please add a caption or an image.");
       return;
     }
-  
+
     const formData = new FormData();
     formData.append("caption", caption);
     if (image) formData.append("image", image);
-  
+
     try {
       const token = localStorage.getItem(ACCESS_TOKEN);
       await api.post("/api/posts/", formData, {
@@ -155,7 +156,7 @@ const Homepage = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       // Reset modal
       setCaption("");
       setImage(null);
@@ -166,21 +167,21 @@ const Homepage = () => {
         fetchPosts(); // reload posts
       }, 300); // 300ms delay for smoother experience
 
-  
+
     } catch (err) {
       console.error("Failed to post", err);
       setError("Something went wrong while posting.");
     }
   };
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       fetchPosts();
     }, 5000); // 5 sec refresh
-  
+
     return () => clearInterval(interval); // Clean-up on unmount
   }, []);
-  
+
   const fetchFriendRequests = async () => {
     try {
       const response = await api.get("/api/friend-requests/");
@@ -193,11 +194,11 @@ const Homepage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchFriendRequests();
-    }, 5000); 
-  
-    return () => clearInterval(interval); 
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
-  
+
   // const [posts, setPosts] = useState([]);
 
 
@@ -206,13 +207,13 @@ const Homepage = () => {
   }, []);
 
   const fetchPosts = async () => {
-    try{
+    try {
       const response = await api.get("/api/posts/");
-      // console.log("Posts response:", response.data); 
+      // console.log("Posts response:", response.data);
       setPosts(response.data);
-    }catch (err) {
+    } catch (err) {
       console.error("Error fetching posts", err);
-  }
+    }
   };
 
   const handleCommentSubmit = async (postId) => {
@@ -231,23 +232,23 @@ const Homepage = () => {
 
 
   const handleLike = async (postId) => {
-      try {
-        await api.post("/api/react/", { post: postId });
-    
-        setLikedPosts((prevLiked) => {
-          if (prevLiked.includes(postId)) {
-            return prevLiked.filter((id) => id !== postId); // unlike
-          } else {
-            return [...prevLiked, postId]; // like
-          }
-        });
-    
-        fetchPosts(); // refresh post data (likes count)
-      } catch (err) {
-        console.error("Like error", err);
-      }
-    };
-    
+    try {
+      await api.post("/api/react/", { post: postId });
+
+      setLikedPosts((prevLiked) => {
+        if (prevLiked.includes(postId)) {
+          return prevLiked.filter((id) => id !== postId); // unlike
+        } else {
+          return [...prevLiked, postId]; // like
+        }
+      });
+
+      fetchPosts(); // refresh post data (likes count)
+    } catch (err) {
+      console.error("Like error", err);
+    }
+  };
+
 
 
   const handleDeletePost = async (postId) => {
@@ -259,7 +260,7 @@ const Homepage = () => {
       console.error("Error deleting post:", error);
     }
   };
-  
+
 
   const handleUsernameClick = async (userId) => {
     try {
@@ -270,7 +271,7 @@ const Homepage = () => {
       console.error("Error fetching user profile", error);
     }
   };
-  
+
   const handleSendFriendRequest = async (toUserId) => {
     try {
       await api.post("/api/friend-requests/send/", {
@@ -283,13 +284,13 @@ const Homepage = () => {
       alert("Could not send request.");
     }
   };
-  
+
   const handleVerifySubmit = async () => {
     if (!govtDoc) return alert("Please upload your government document.");
-  
+
     const formData = new FormData();
     formData.append("govt_document", govtDoc);
-  
+
     try {
       const token = localStorage.getItem(ACCESS_TOKEN);
       await api.put(`/api/profile/${profile.id}/verify/`, formData, {
@@ -298,7 +299,7 @@ const Homepage = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       // ✅ Re-fetch profile after successful submission
       const updatedProfile = await api.get(`/api/profile/${profile.id}/`, {
         headers: {
@@ -306,7 +307,7 @@ const Homepage = () => {
         },
       });
       setProfile(updatedProfile.data);
-  
+
       setVerificationStatus("pending");
       setShowVerifyModal(false);
     } catch (err) {
@@ -351,6 +352,8 @@ const Homepage = () => {
       alert("Failed to submit the report.");
     }
   };
+
+
 
   if (loading) {
     return <p className="loading">Loading...</p>;
@@ -405,7 +408,7 @@ const Homepage = () => {
                 {showFullBio
                   ? profile.bio
                   : profile.bio.split(" ").slice(0, 4).join(" ") +
-                    (profile.bio.split(" ").length > 4 ? "..." : "")}
+                  (profile.bio.split(" ").length > 4 ? "..." : "")}
                 {profile.bio.split(" ").length > 4 && (
                   <span
                     onClick={() => setShowFullBio(!showFullBio)}
@@ -435,9 +438,9 @@ const Homepage = () => {
         </button>
         <button
           className="sidebar-button"
-          onClick={() => alert("MarketPlace route not implemented!")}
+          onClick={() => navigate('/marketplace')}
         >
-          MarketPlace
+          Marketplace
         </button>
         <button onClick={handleLogout} className="logout-button">
           Logout
@@ -445,96 +448,96 @@ const Homepage = () => {
       </div>
 
       {/* Center Content */}
-      <div className="main-content">
+      <div className="main-content"> 
         {/* Create Post */}
         <div className="create-post" onClick={() => setShowPostModal(true)}>
-        <input
-          type="text"
-          placeholder="What's on your mind?"
-          className="create-post-input"
-          readOnly
-        />
-      </div>
+          <input
+            type="text"
+            placeholder="What's on your mind?"
+            className="create-post-input"
+            readOnly
+          />
+        </div>
         {posts.map((post) => {
-        // console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
-        return (
-          <div className="post-box" key={post.id}>
-            <div className="post-header">
-              {post.profile_image && (
-                <img
-                  src={`${import.meta.env.VITE_API_URL}/api${post.profile_image}`}
-                  alt="Profile"
-                  className="post-profile-pic"
-                />
-              )}
-              <span
-                className="post-username"
-                style={{ cursor: "pointer", color: "#007bff" }}
-                onClick={() => handleUsernameClick(post.user)}
-              >
-                {post.username}
-              </span>
-               {/* ⋮ Menu Button */}
-              <div className="post-menu-container">
-                <button
-                  className="post-menu-btn"
-                  onClick={() =>
-                    setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)
-                  }
-                >
-                  ⋮
-                </button>
-
-                {openMenuPostId === post.id && (
-                  <div className="post-menu-dropdown">
-                    {/* Show Delete only if user is author */}
-                    {profile?.id === post.user && (
-                      <button
-                        className="post-menu-item delete"
-                        onClick={() => handleDeletePost(post.id)}
-                      >
-                        🗑 Delete
-                      </button>
-                    )}
-                    <button
-                      className="post-menu-item report"
-                      onClick={() => handleReportPost(post.id)}
-                    >
-                      🚩 Report
-                    </button>
-                  </div>
+          // console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
+          return (
+            <div className="post-box" key={post.id}>
+              <div className="post-header">
+                {post.profile_image && (
+                  <img
+                    src={`${import.meta.env.VITE_API_URL}/api${post.profile_image}`}
+                    alt="Profile"
+                    className="post-profile-pic"
+                  />
                 )}
+                <span
+                  className="post-username"
+                  style={{ cursor: "pointer", color: "#007bff" }}
+                  onClick={() => handleUsernameClick(post.user)}
+                >
+                  {post.username}
+                </span>
+                {/* ⋮ Menu Button */}
+                <div className="post-menu-container">
+                  <button
+                    className="post-menu-btn"
+                    onClick={() =>
+                      setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)
+                    }
+                  >
+                    ⋮
+                  </button>
+
+                  {openMenuPostId === post.id && (
+                    <div className="post-menu-dropdown">
+                      {/* Show Delete only if user is author */}
+                      {profile?.id === post.user && (
+                        <button
+                          className="post-menu-item delete"
+                          onClick={() => handleDeletePost(post.id)}
+                        >
+                          🗑 Delete
+                        </button>
+                      )}
+                      <button
+                        className="post-menu-item report"
+                        onClick={() => handleReportPost(post.id)}
+                      >
+                        🚩 Report
+                      </button>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
-            </div>
+              {post.image && (
+                <img
+                  src={`${import.meta.env.VITE_API_URL}/api${post.image}`}
+                  alt="Post"
+                  className="post-image"
+                />
+              )}
 
-            {post.image && (
-              <img
-                src={`${import.meta.env.VITE_API_URL}/api${post.image}`}
-                alt="Post"
-                className="post-image"
-              />
-            )}
-
-            <div className="caption">{post.caption}</div>
-            <div className="timestamp">
-              {new Date(post.created_at).toLocaleString()}
-            </div>
-            {/* ❤️ Like Button */}
-            {/* <button className="like-btn" onClick={() => handleLike(post.id)}>
+              <div className="caption">{post.caption}</div>
+              <div className="timestamp">
+                {new Date(post.created_at).toLocaleString()}
+              </div>
+              {/* ❤️ Like Button */}
+              {/* <button className="like-btn" onClick={() => handleLike(post.id)}>
               👍 Like ({post.likes_count})
             </button> */}
-            <button
-              className={`like-btn ${post.has_liked ? "liked" : ""}`}
-              onClick={() => handleLike(post.id)}
-            >
-              👍 Like ({post.likes_count})
-            </button>
+              <button
+                className={`like-btn ${post.has_liked ? "liked" : ""}`}
+                onClick={() => handleLike(post.id)}
+              >
+                👍 Like ({post.likes_count})
+              </button>
 
-            {/* 💬 Comments Section */}
-            <div className="comments">
-              <h4>Comments</h4>
-              {(showAllComments[post.id]
+              {/* 💬 Comments Section */}
+              <div className="comments">
+                <h4>Comments</h4>
+                {(showAllComments[post.id]
                   ? post.comments
                   : post.comments.slice(0, 3)
                 ).map((comment) => (
@@ -567,22 +570,22 @@ const Homepage = () => {
                 )}
 
 
-              {/* Add Comment Input */}
-              <div className="add-comment">
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  value={newComments[post.id] || ""}
-                  onChange={(e) =>
-                    setNewComments({ ...newComments, [post.id]: e.target.value })
-                  }
-                />
-                <button onClick={() => handleCommentSubmit(post.id)}>Post</button>
+                {/* Add Comment Input */}
+                <div className="add-comment">
+                  <input
+                    type="text"
+                    placeholder="Write a comment..."
+                    value={newComments[post.id] || ""}
+                    onChange={(e) =>
+                      setNewComments({ ...newComments, [post.id]: e.target.value })
+                    }
+                  />
+                  <button onClick={() => handleCommentSubmit(post.id)}>Post</button>
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
         {/* Post 1 */}
         {/*div className="post-box">
           <div className="post-header">  // const [posts, setPosts] = useState([]);
@@ -650,7 +653,7 @@ const Homepage = () => {
           ))
         )}
       </div>
-        
+
       {showPostModal && (
         <div className="post-modal-overlay">
           <div className="post-modal">
@@ -720,7 +723,7 @@ const Homepage = () => {
               accept=".jpg,.jpeg,.png,.pdf"
               onChange={(e) => setGovtDoc(e.target.files[0])}
             />
-            
+
             <button onClick={handleVerifySubmit} className="send-request-button">
               Submit for Verification
             </button>

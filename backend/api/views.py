@@ -6,6 +6,8 @@ from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP
 
 from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer, SendOTPSerializer, VerifyOTPSerializer
 
+from rest_framework import serializers 
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -23,12 +25,24 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.generics import ListAPIView
 from api.models import Comment, Report, Group, GroupMessage
-from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer, ReportSerializer, GroupSerializer, GroupMessageSerializer
+from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer, ReportSerializer, GroupSerializer, GroupMessageSerializer, ListingSerializer
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.parsers import MultiPartParser, FormParser
+
+from .models import Listing
+from .models import Order
+from .serializer import ListingSerializer, OrderSerializer
+from rest_framework import generics, permissions
+
+from .models import Listing, Order, Withdrawal
+from .serializer import (
+    ListingSerializer, 
+    OrderSerializer,
+    WithdrawalSerializer
+)
 
 
 
@@ -607,3 +621,313 @@ class GroupChatMessageView(APIView):
             media=media
         )
         return Response(GroupMessageSerializer(message).data, status=status.HTTP_201_CREATED)
+
+
+
+# class MarketplaceListAPI(generics.ListAPIView):
+#     """
+#     Public marketplace view for all users
+#     """
+#     serializer_class = ListingSerializer
+#     queryset = Listing.objects.filter(status='active')  # Only show active listings
+    
+#     def get_queryset(self):
+#         queryset = super().get_queryset()
+#         # Add simple search functionality
+#         search_query = self.request.query_params.get('search', None)
+#         if search_query:
+#             queryset = queryset.filter(title__icontains=search_query)
+#         return queryset
+    
+class SellerListingsAPI(generics.ListCreateAPIView):
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if not self.request.user.profile.verified:
+            raise PermissionDenied("You must verify your account to access marketplace features")
+        return Listing.objects.filter(seller=self.request.user)
+
+class MarketplaceListAPI(generics.ListAPIView):
+    serializer_class = ListingSerializer
+    
+    def get_queryset(self):
+        if self.request.user.is_authenticated and not self.request.user.profile.verified:
+            raise PermissionDenied("You must verify your account to access marketplace features")
+        return Listing.objects.filter(status='active')
+
+class ListingDetailAPI(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Ensures users can only access their own listings"""
+        return Listing.objects.filter(seller=self.request.user)
+
+from .models import Listing, Order
+
+class SellerDashboardAPI(APIView):
+    def get(self, request):
+        seller = request.user
+        listings = Listing.objects.filter(seller=seller)
+        orders = Order.objects.filter(listing__seller=seller)
+        
+        return Response({
+            'stats': {
+                'totalSales': orders.filter(status='completed').count(),
+                'pendingOrders': orders.filter(status='pending').count(),
+                'completedOrders': orders.filter(status='completed').count(),
+                'balance': sum(order.price_at_purchase for order in orders.filter(status='completed'))
+            },
+            'listings': ListingSerializer(listings, many=True).data,
+            'orders': OrderSerializer(orders.order_by('-created_at'), many=True).data
+        })
+    
+class BuyerMarketplaceAPI(APIView):
+    """
+    API endpoint for buyers to view active marketplace listings
+    """
+    def get(self, request):
+        try:
+            active_listings = Listing.objects.filter(status='active')
+            serializer = ListingSerializer(active_listings, many=True)
+            return Response({
+                'success': True,
+                'listings': serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CreateListingAPI(APIView):
+    """
+    API endpoint for creating new listings
+    """
+    def post(self, request):
+        try:
+            serializer = ListingSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(seller=request.user)
+                return Response({
+                    'success': True,
+                    'listing': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class OrderSerializer(serializers.ModelSerializer):
+    buyer_name = serializers.CharField(source='buyer.username', read_only=True)
+    listing_title = serializers.CharField(source='listing.title', read_only=True)
+    thumbnail = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'buyer',
+            'buyer_name',
+            'listing',
+            'listing_title',
+            'thumbnail',
+            'status',
+            'quantity',
+            'price_at_purchase',
+            'created_at',
+            'shipping_address',
+            'payment_method'
+        ]
+        read_only_fields = [
+            'buyer',
+            'seller',
+            'price_at_purchase',
+            'created_at'
+        ]
+
+    def get_thumbnail(self, obj):
+        if obj.listing.thumbnail:
+            return obj.listing.thumbnail.url
+        return None
+    
+
+# class SellerDashboardAPI(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         seller = request.user
+#         listings = Listing.objects.filter(seller=seller)
+#         orders = Order.objects.filter(seller=seller)
+        
+#         return Response({
+#             'stats': {
+#                 'totalSales': orders.filter(status='completed').count(),
+#                 'pendingOrders': orders.filter(status='pending').count(),
+#                 'completedOrders': orders.filter(status='completed').count(),
+#                 'balance': sum(
+#                     order.price_at_purchase * order.quantity 
+#                     for order in orders.filter(status='completed')
+#                 )
+#             },
+#             'listings': ListingSerializer(listings, many=True).data,
+#             'orders': OrderSerializer(orders.order_by('-created_at'), many=True).data
+#         })
+
+class SellerListingsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        listings = Listing.objects.filter(seller=request.user)
+        serializer = ListingSerializer(listings, many=True)
+        return Response({
+            'success': True,
+            'listings': serializer.data
+        })
+
+    def post(self, request):
+        serializer = ListingSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(seller=request.user)
+            return Response({
+                'success': True,
+                'listing': serializer.data
+            }, status=201)
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=400)
+
+class SellerListingDetailAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Listing.objects.get(pk=pk, seller=self.request.user)
+        except Listing.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        listing = self.get_object(pk)
+        if not listing:
+            return Response({'success': False, 'error': 'Not found'}, status=404)
+        serializer = ListingSerializer(listing)
+        return Response({'success': True, 'listing': serializer.data})
+
+    def put(self, request, pk):
+        listing = self.get_object(pk)
+        if not listing:
+            return Response({'success': False, 'error': 'Not found'}, status=404)
+        
+        serializer = ListingSerializer(listing, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': True, 'listing': serializer.data})
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=400)
+
+    def delete(self, request, pk):
+        listing = self.get_object(pk)
+        if not listing:
+            return Response({'success': False, 'error': 'Not found'}, status=404)
+        listing.delete()
+        return Response({'success': True}, status=204)
+
+class SellerOrdersAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        orders = Order.objects.filter(listing__seller=request.user)
+        serializer = OrderSerializer(orders, many=True)
+        return Response({
+            'success': True,
+            'orders': serializer.data
+        })
+
+class SellerOrderDetailAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Order.objects.get(pk=pk, listing__seller=self.request.user)
+        except Order.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        order = self.get_object(pk)
+        if not order:
+            return Response({'success': False, 'error': 'Not found'}, status=404)
+        serializer = OrderSerializer(order)
+        return Response({'success': True, 'order': serializer.data})
+
+    def patch(self, request, pk):
+        order = self.get_object(pk)
+        if not order:
+            return Response({'success': False, 'error': 'Not found'}, status=404)
+        
+        serializer = OrderSerializer(order, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': True, 'order': serializer.data})
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=400)
+
+class SellerStatsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        completed_orders = Order.objects.filter(
+            listing__seller=request.user,
+            status='completed'
+        )
+        pending_orders = Order.objects.filter(
+            listing__seller=request.user,
+            status='pending'
+        )
+        
+        total_sales = sum(order.price_at_purchase for order in completed_orders)
+        available_balance = total_sales * 0.85  # Assuming 15% platform fee
+        
+        return Response({
+            'success': True,
+            'stats': {
+                'total_sales': total_sales,
+                'pending_orders': pending_orders.count(),
+                'completed_orders': completed_orders.count(),
+                'balance': available_balance
+            }
+        })
+
+class WithdrawalAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = WithdrawalSerializer(data=request.data)
+        if serializer.is_valid():
+            # Check available balance
+            stats = SellerStatsAPI().get(request).data['stats']
+            if serializer.validated_data['amount'] > stats['balance']:
+                return Response({
+                    'success': False,
+                    'error': 'Amount exceeds available balance'
+                }, status=400)
+                
+            serializer.save(seller=request.user)
+            return Response({
+                'success': True,
+                'withdrawal': serializer.data
+            }, status=201)
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=400)

@@ -1,10 +1,14 @@
 from django.conf import settings
 import requests
-from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction, Report, Group, GroupMessage
+from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP, Post, Comment, Reaction, Listing, Report, Group, GroupMessage
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from .models import Listing, Order, Withdrawal
+
+
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -311,3 +315,49 @@ class GroupMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupMessage
         fields = ['sender', 'content', 'media', 'created_at']
+
+
+class ListingSerializer(serializers.ModelSerializer):
+    thumbnail_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Listing
+        fields = [
+            'id', 'title', 'description', 'price', 
+            'category', 'status', 'thumbnail', 'thumbnail_url',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['seller', 'created_at', 'updated_at']
+    
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            return obj.thumbnail.url
+        return None
+
+class OrderSerializer(serializers.ModelSerializer):
+    buyer_name = serializers.CharField(source='buyer.username', read_only=True)
+    listing_title = serializers.CharField(source='listing.title', read_only=True)
+    listing_thumbnail = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'buyer', 'buyer_name', 'listing', 'listing_title',
+            'listing_thumbnail', 'status', 'quantity', 'price_at_purchase',
+            'created_at', 'updated_at', 'shipping_address', 'payment_method'
+        ]
+        read_only_fields = [
+            'buyer', 'listing', 'price_at_purchase', 
+            'created_at', 'updated_at'
+        ]
+    
+    def get_listing_thumbnail(self, obj):
+        if obj.listing.thumbnail:
+            return obj.listing.thumbnail.url
+        return None
+
+class WithdrawalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Withdrawal
+        fields = ['id', 'amount', 'payment_method', 'status', 'created_at']
+        read_only_fields = ['status', 'created_at']

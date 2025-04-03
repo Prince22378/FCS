@@ -117,6 +117,7 @@ import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN } from "../constants";
 import Navbar from "./Navbar"; // Import Navbar component
 import LoadingIndicator from "./LoadingIndicator"; // Import LoadingIndicator component
+import { Link } from 'react-router-dom';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -186,6 +187,12 @@ function Dashboard() {
                 </li>
                 <li className="nav-item">
                   <a className="nav-link" href="#">Integrations</a>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/marketplace">
+                    <i className="fas fa-store me-2"></i>
+                    Marketplace
+                  </Link>
                 </li>
               </ul>
             </div>

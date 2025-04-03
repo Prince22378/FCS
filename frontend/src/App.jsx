@@ -18,6 +18,14 @@ import EditProfile from "./pages/EditProfile.jsx";
 import FriendPage from './pages/FriendPage';
 import ChatroomPage from "./pages/ChatRoomPage.jsx";
 import ReportsLogs from "./pages/ReportsLogs"; 
+import Marketplace from './pages/Marketplace.jsx';
+import BuyerMarketplace from './pages/BuyerMarketplace.jsx';
+import SellerDashboard from './pages/SellerDashboard.jsx';
+import SellerListings from './pages/SellerListings.jsx';
+
+
+
+
 
 function Logout() {
   localStorage.clear();
@@ -77,7 +85,7 @@ function App() {
           path="/friends"
           element={
             <ProtectedRoute>
-              <FriendPage/>
+              <FriendPage />
             </ProtectedRoute>
           }
         />
@@ -85,12 +93,19 @@ function App() {
           path="/chat"
           element={
             <ProtectedRoute>
-              <ChatroomPage/>
+              <ChatroomPage />
             </ProtectedRoute>
           }
         />
 
+        <Route path="/seller" element={<SellerDashboard />} />
+        <Route path="/seller/listings" element={<SellerListings />} />
         
+
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="marketplace/buyer" element={<BuyerMarketplace />} />
+
+
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />

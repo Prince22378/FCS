@@ -10,6 +10,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from .views import SellerListingsAPI, ListingDetailAPI
+from .views import MarketplaceListAPI
+from .views import BuyerMarketplaceAPI
+from .views import CreateListingAPI
+
 router = DefaultRouter()
 router.register(r'posts', PostViewSet)
 
@@ -65,7 +70,24 @@ urlpatterns = [
 
     path('public-profile/<int:user_id>/', views.public_profile_view),
 
+    #P2P
+    path('seller/', views.SellerListingsAPI.as_view(), name='seller-listings'),
+    path('listings/<int:pk>/', views.ListingDetailAPI.as_view(), name='listing-detail'),
+    path('marketplace/', views.MarketplaceListAPI.as_view(), name='marketplace-list'),
+    path('marketplace/buyer/', views.BuyerMarketplaceAPI.as_view(), name='buyer-marketplace'),
+    path('seller/dashboard/', views.SellerDashboardAPI.as_view()),
+    
+    # Seller orders endpoints
+    path('seller/orders/', views.SellerOrdersAPI.as_view(), name='seller-orders'),
+    path('seller/orders/<int:pk>/', views.SellerOrderDetailAPI.as_view(), name='seller-order-detail'),
+    
+    # Seller stats endpoint
+    path('seller/stats/', views.SellerStatsAPI.as_view(), name='seller-stats'),
+    
+    # Withdrawal endpoint
+    path('seller/withdraw/', views.WithdrawalAPI.as_view(), name='seller-withdraw'),
 ]
+
 
 urlpatterns += router.urls
 

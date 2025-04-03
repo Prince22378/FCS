@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser
 import random
 from datetime import timedelta
 from django.utils import timezone
+from django.core.validators import MinValueValidator, FileExtensionValidator
+from django.core.exceptions import ValidationError
 
 
 class User(AbstractUser):
@@ -134,6 +136,350 @@ class EmailOTP(models.Model):
     def __str__(self):
         return f"{self.email} - {self.otp}"
 
+
+class Report(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # The user reporting
+    reason = models.CharField(max_length=255)  # Reason for reporting (e.g., Spam, Abusive, etc.)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, default="pending", choices=[("pending", "Pending"), ("resolved", "Resolved"), ("taken_down", "Taken Down")])
+
+    def __str__(self):
+        return f"Report by {self.user.username} on Post {self.post.id} for {self.reason}"
+
+
+class Group(models.Model):
+    name = models.CharField(max_length=255)
+    bio = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='group_images/', null=True, blank=True)
+    members = models.ManyToManyField(User, related_name='group_members')  # Group members
+    created_by = models.ForeignKey(User, related_name='created_groups', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class GroupMessage(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    media = models.FileField(upload_to='group_media/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender.username} in group {self.group.name}"
+class Listing(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('sold', 'Sold'),
+        ('archived', 'Archived')  # Added for completed listings
+    ]
+
+    seller = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='listings',
+        db_index=True  # Added for better query performance
+    )
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0.01)]  # Ensure positive price
+    )
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default='draft',
+        db_index=True
+    )
+    thumbnail = models.ImageField(
+        upload_to='listings/%Y/%m/%d/',  # Organized by date
+        null=True, 
+        blank=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track modifications
+    category = models.CharField(  # Added for better organization
+        max_length=50,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        ordering = ['-created_at']  # Newest first by default
+        verbose_name_plural = "Listings"
+        indexes = [
+            models.Index(fields=['title', 'status']),  # Better search performance
+        ]
+
+    def __str__(self):
+        return f"{self.title} (${self.price}) by {self.seller.username}"
+
+    def clean(self):
+        """Additional validation"""
+        if self.price < 0:
+            raise ValidationError("Price cannot be negative")
+            
+    @property
+    def thumbnail_url(self):
+        """Easy access to thumbnail URL"""
+        if self.thumbnail and hasattr(self.thumbnail, 'url'):
+            return self.thumbnail.url
+        return '/static/default_listing.jpg'  # Default image
+    
+
+# class Order(models.Model):
+#     STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('completed', 'Completed'),
+#         ('cancelled', 'Cancelled'),
+#         ('shipped', 'Shipped'),
+#     ]
+
+#     buyer = models.ForeignKey(
+#         User, 
+#         on_delete=models.CASCADE, 
+#         related_name='buyer_orders'
+#     )
+#     seller = models.ForeignKey(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name='seller_orders'
+#     )
+#     listing = models.ForeignKey(
+#         Listing,
+#         on_delete=models.CASCADE,
+#         related_name='orders'
+#     )
+#     status = models.CharField(
+#         max_length=10,
+#         choices=STATUS_CHOICES,
+#         default='pending'
+#     )
+#     quantity = models.PositiveIntegerField(default=1)
+#     price_at_purchase = models.DecimalField(
+#         max_digits=10,
+#         decimal_places=2
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     shipping_address = models.TextField(blank=True)
+#     payment_method = models.CharField(max_length=50, blank=True)
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         indexes = [
+#             models.Index(fields=['buyer']),
+#             models.Index(fields=['seller']),
+#             models.Index(fields=['status']),
+#         ]
+
+#     def save(self, *args, **kwargs):
+#         if not self.price_at_purchase:
+#             self.price_at_purchase = self.listing.price
+#         if not self.seller_id:
+#             self.seller = self.listing.seller
+#         super().save(*args, **kwargs)
+
+#     def __str__(self):
+#         return f"Order #{self.id} - {self.listing.title}"
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    ]
+    
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order #{self.id}"
+    
+class Withdrawal(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processed', 'Processed'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    PAYMENT_METHODS = [
+        ('bank_transfer', 'Bank Transfer'),
+        ('upi', 'UPI'),
+        ('paypal', 'PayPal'),
+    ]
+    
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Withdrawal #{self.id} - {self.seller.username}"
+
+
+class Listing(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('sold', 'Sold'),
+        ('archived', 'Archived')  # Added for completed listings
+    ]
+
+    seller = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='listings',
+        db_index=True  # Added for better query performance
+    )
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0.01)]  # Ensure positive price
+    )
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default='draft',
+        db_index=True
+    )
+    thumbnail = models.ImageField(
+        upload_to='listings/%Y/%m/%d/',  # Organized by date
+        null=True, 
+        blank=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track modifications
+    category = models.CharField(  # Added for better organization
+        max_length=50,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        ordering = ['-created_at']  # Newest first by default
+        verbose_name_plural = "Listings"
+        indexes = [
+            models.Index(fields=['title', 'status']),  # Better search performance
+        ]
+
+    def __str__(self):
+        return f"{self.title} (${self.price}) by {self.seller.username}"
+
+    def clean(self):
+        """Additional validation"""
+        if self.price < 0:
+            raise ValidationError("Price cannot be negative")
+            
+    @property
+    def thumbnail_url(self):
+        """Easy access to thumbnail URL"""
+        if self.thumbnail and hasattr(self.thumbnail, 'url'):
+            return self.thumbnail.url
+        return '/static/default_listing.jpg'  # Default image
+    
+
+# class Order(models.Model):
+#     STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('completed', 'Completed'),
+#         ('cancelled', 'Cancelled'),
+#         ('shipped', 'Shipped'),
+#     ]
+
+#     buyer = models.ForeignKey(
+#         User, 
+#         on_delete=models.CASCADE, 
+#         related_name='buyer_orders'
+#     )
+#     seller = models.ForeignKey(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name='seller_orders'
+#     )
+#     listing = models.ForeignKey(
+#         Listing,
+#         on_delete=models.CASCADE,
+#         related_name='orders'
+#     )
+#     status = models.CharField(
+#         max_length=10,
+#         choices=STATUS_CHOICES,
+#         default='pending'
+#     )
+#     quantity = models.PositiveIntegerField(default=1)
+#     price_at_purchase = models.DecimalField(
+#         max_digits=10,
+#         decimal_places=2
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     shipping_address = models.TextField(blank=True)
+#     payment_method = models.CharField(max_length=50, blank=True)
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         indexes = [
+#             models.Index(fields=['buyer']),
+#             models.Index(fields=['seller']),
+#             models.Index(fields=['status']),
+#         ]
+
+#     def save(self, *args, **kwargs):
+#         if not self.price_at_purchase:
+#             self.price_at_purchase = self.listing.price
+#         if not self.seller_id:
+#             self.seller = self.listing.seller
+#         super().save(*args, **kwargs)
+
+#     def __str__(self):
+#         return f"Order #{self.id} - {self.listing.title}"
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    ]
+    
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order #{self.id}"
+    
+class Withdrawal(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processed', 'Processed'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    PAYMENT_METHODS = [
+        ('bank_transfer', 'Bank Transfer'),
+        ('upi', 'UPI'),
+        ('paypal', 'PayPal'),
+    ]
+    
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Withdrawal #{self.id} - {self.seller.username}"
 
 class Report(models.Model):
     post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
