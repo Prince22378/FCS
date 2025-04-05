@@ -240,6 +240,15 @@ const ChatroomPage = () => {
   return (
     <div className="chatroom-container">
       <div className="chat-sidebar">
+        <div class="search-container">
+          <input 
+              type="text" 
+              class="search-input" 
+              placeholder="Search..." 
+            />
+            <button class="search-button">Search</button>
+          </div>
+
         <h2>ChatApp</h2>
         <input className="search-input" placeholder="Search chat..." />
 
