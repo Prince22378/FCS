@@ -818,3 +818,36 @@
   border-radius: 20px;
   max-width: 70%;
 }
+
+/* Container that holds both the search input and button */
+.search-container {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+/* Make the input fill the available space and style it */
+.search-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px 0 0 10px;
+  border: 1px solid #ccc;
+  outline: none;
+  border-right: none; /* Removes the right border so it merges nicely with the button */
+}
+
+/* The search button styling */
+.search-button {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-left: none; /* So it merges seamlessly with the input */
+  border-radius: 0 10px 10px 0;
+  background-color: #4f46e5;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Hover effect for the button */
+.search-button:hover {
+  background-color: #4338ca;
+}
