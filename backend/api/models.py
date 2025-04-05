@@ -169,68 +169,68 @@ class GroupMessage(models.Model):
     def __str__(self):
         return f"Message from {self.sender.username} in group {self.group.name}"
         
-# class Listing(models.Model):
-#     STATUS_CHOICES = [
-#         ('draft', 'Draft'),
-#         ('active', 'Active'),
-#         ('sold', 'Sold'),
-#         ('archived', 'Archived')  # Added for completed listings
-#     ]
+class Listing(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('sold', 'Sold'),
+        ('archived', 'Archived')  # Added for completed listings
+    ]
 
-#     seller = models.ForeignKey(
-#         User, 
-#         on_delete=models.CASCADE, 
-#         related_name='listings',
-#         db_index=True  # Added for better query performance
-#     )
-#     title = models.CharField(max_length=100)
-#     description = models.TextField()
-#     price = models.DecimalField(
-#         max_digits=10, 
-#         decimal_places=2,
-#         validators=[MinValueValidator(0.01)]  # Ensure positive price
-#     )
-#     status = models.CharField(
-#         max_length=10, 
-#         choices=STATUS_CHOICES, 
-#         default='draft',
-#         db_index=True
-#     )
-#     thumbnail = models.ImageField(
-#         upload_to='listings/%Y/%m/%d/',  # Organized by date
-#         null=True, 
-#         blank=True,
-#         validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)  # Track modifications
-#     category = models.CharField(  # Added for better organization
-#         max_length=50,
-#         blank=True,
-#         null=True
-#     )
+    seller = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='listings',
+        db_index=True  # Added for better query performance
+    )
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0.01)]  # Ensure positive price
+    )
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default='draft',
+        db_index=True
+    )
+    thumbnail = models.ImageField(
+        upload_to='listings/%Y/%m/%d/',  # Organized by date
+        null=True, 
+        blank=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Track modifications
+    category = models.CharField(  # Added for better organization
+        max_length=50,
+        blank=True,
+        null=True
+    )
 
-#     class Meta:
-#         ordering = ['-created_at']  # Newest first by default
-#         verbose_name_plural = "Listings"
-#         indexes = [
-#             models.Index(fields=['title', 'status']),  # Better search performance
-#         ]
+    class Meta:
+        ordering = ['-created_at']  # Newest first by default
+        verbose_name_plural = "Listings"
+        indexes = [
+            models.Index(fields=['title', 'status']),  # Better search performance
+        ]
 
-#     def __str__(self):
-#         return f"{self.title} (${self.price}) by {self.seller.username}"
+    def __str__(self):
+        return f"{self.title} (${self.price}) by {self.seller.username}"
 
-#     def clean(self):
-#         """Additional validation"""
-#         if self.price < 0:
-#             raise ValidationError("Price cannot be negative")
+    def clean(self):
+        """Additional validation"""
+        if self.price < 0:
+            raise ValidationError("Price cannot be negative")
             
-#     @property
-#     def thumbnail_url(self):
-#         """Easy access to thumbnail URL"""
-#         if self.thumbnail and hasattr(self.thumbnail, 'url'):
-#             return self.thumbnail.url
-#         return '/static/default_listing.jpg'  # Default image
+    @property
+    def thumbnail_url(self):
+        """Easy access to thumbnail URL"""
+        if self.thumbnail and hasattr(self.thumbnail, 'url'):
+            return self.thumbnail.url
+        return '/static/default_listing.jpg'  # Default image
     
 
 # class Order(models.Model):
@@ -326,68 +326,68 @@ class Withdrawal(models.Model):
         return f"Withdrawal #{self.id} - {self.seller.username}"
 
 
-class Listing(models.Model):
-    STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('active', 'Active'),
-        ('sold', 'Sold'),
-        ('archived', 'Archived')  # Added for completed listings
-    ]
+# class Listing(models.Model):
+#     STATUS_CHOICES = [
+#         ('draft', 'Draft'),
+#         ('active', 'Active'),
+#         ('sold', 'Sold'),
+#         ('archived', 'Archived')  # Added for completed listings
+#     ]
 
-    seller = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name='listings',
-        db_index=True  # Added for better query performance
-    )
-    title = models.CharField(max_length=100)
-    description = models.TextField()
-    price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2,
-        validators=[MinValueValidator(0.01)]  # Ensure positive price
-    )
-    status = models.CharField(
-        max_length=10, 
-        choices=STATUS_CHOICES, 
-        default='draft',
-        db_index=True
-    )
-    thumbnail = models.ImageField(
-        upload_to='listings/%Y/%m/%d/',  # Organized by date
-        null=True, 
-        blank=True,
-        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # Track modifications
-    category = models.CharField(  # Added for better organization
-        max_length=50,
-        blank=True,
-        null=True
-    )
+#     seller = models.ForeignKey(
+#         User, 
+#         on_delete=models.CASCADE, 
+#         related_name='listings',
+#         db_index=True  # Added for better query performance
+#     )
+#     title = models.CharField(max_length=100)
+#     description = models.TextField()
+#     price = models.DecimalField(
+#         max_digits=10, 
+#         decimal_places=2,
+#         validators=[MinValueValidator(0.01)]  # Ensure positive price
+#     )
+#     status = models.CharField(
+#         max_length=10, 
+#         choices=STATUS_CHOICES, 
+#         default='draft',
+#         db_index=True
+#     )
+#     thumbnail = models.ImageField(
+#         upload_to='listings/%Y/%m/%d/',  # Organized by date
+#         null=True, 
+#         blank=True,
+#         validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)  # Track modifications
+#     category = models.CharField(  # Added for better organization
+#         max_length=50,
+#         blank=True,
+#         null=True
+#     )
 
-    class Meta:
-        ordering = ['-created_at']  # Newest first by default
-        verbose_name_plural = "Listings"
-        indexes = [
-            models.Index(fields=['title', 'status']),  # Better search performance
-        ]
+#     class Meta:
+#         ordering = ['-created_at']  # Newest first by default
+#         verbose_name_plural = "Listings"
+#         indexes = [
+#             models.Index(fields=['title', 'status']),  # Better search performance
+#         ]
 
-    def __str__(self):
-        return f"{self.title} (${self.price}) by {self.seller.username}"
+#     def __str__(self):
+#         return f"{self.title} (${self.price}) by {self.seller.username}"
 
-    def clean(self):
-        """Additional validation"""
-        if self.price < 0:
-            raise ValidationError("Price cannot be negative")
+#     def clean(self):
+#         """Additional validation"""
+#         if self.price < 0:
+#             raise ValidationError("Price cannot be negative")
             
-    @property
-    def thumbnail_url(self):
-        """Easy access to thumbnail URL"""
-        if self.thumbnail and hasattr(self.thumbnail, 'url'):
-            return self.thumbnail.url
-        return '/static/default_listing.jpg'  # Default image
+#     @property
+#     def thumbnail_url(self):
+#         """Easy access to thumbnail URL"""
+#         if self.thumbnail and hasattr(self.thumbnail, 'url'):
+#             return self.thumbnail.url
+#         return '/static/default_listing.jpg'  # Default image
     
 
 # class Order(models.Model):
