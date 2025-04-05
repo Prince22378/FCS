@@ -168,6 +168,7 @@ class GroupMessage(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender.username} in group {self.group.name}"
+        
 class Listing(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),
@@ -492,23 +493,23 @@ class Report(models.Model):
         return f"Report by {self.user.username} on Post {self.post.id} for {self.reason}"
 
 
-class Group(models.Model):
-    name = models.CharField(max_length=255)
-    bio = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='group_images/', null=True, blank=True)
-    members = models.ManyToManyField(User, related_name='group_members')  # Group members
-    created_by = models.ForeignKey(User, related_name='created_groups', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+# class Group(models.Model):
+#     name = models.CharField(max_length=255)
+#     bio = models.TextField(blank=True, null=True)
+#     image = models.ImageField(upload_to='group_images/', null=True, blank=True)
+#     members = models.ManyToManyField(User, related_name='group_members')  # Group members
+#     created_by = models.ForeignKey(User, related_name='created_groups', on_delete=models.CASCADE)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
-class GroupMessage(models.Model):
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='messages')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    media = models.FileField(upload_to='group_media/', null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+# class GroupMessage(models.Model):
+#     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='messages')
+#     sender = models.ForeignKey(User, on_delete=models.CASCADE)
+#     content = models.TextField()
+#     media = models.FileField(upload_to='group_media/', null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Message from {self.sender.username} in group {self.group.name}"
+#     def __str__(self):
+#         return f"Message from {self.sender.username} in group {self.group.name}"
