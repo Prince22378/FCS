@@ -334,6 +334,7 @@ class ListingSerializer(serializers.ModelSerializer):
             return obj.thumbnail.url
         return None
 
+
 class OrderSerializer(serializers.ModelSerializer):
     buyer_name = serializers.CharField(source='buyer.username', read_only=True)
     listing_title = serializers.CharField(source='listing.title', read_only=True)
@@ -361,3 +362,165 @@ class WithdrawalSerializer(serializers.ModelSerializer):
         model = Withdrawal
         fields = ['id', 'amount', 'payment_method', 'status', 'created_at']
         read_only_fields = ['status', 'created_at']
+
+
+
+# buyer
+from .models import (
+    BuyerProfile, Address, PaymentMethod, Order, 
+    OrderItem, Wishlist, ReturnRequest, 
+    Transaction, Invoice
+)
+
+class BuyerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BuyerProfile
+        fields = ['phone_number', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = [
+            'id', 'name', 'line1', 'line2', 'city', 
+            'state', 'zip_code', 'phone', 'is_default',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    masked_card_number = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PaymentMethod
+        fields = [
+            'id', 'payment_type', 'masked_card_number', 'card_name',
+            'expiry_month', 'expiry_year', 'upi_id', 'wallet_name',
+            'is_default', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'card_number': {'write_only': True},
+        }
+    
+    def get_masked_card_number(self, obj):
+        if obj.payment_type in ['credit_card', 'debit_card'] and obj.card_number:
+            return f"•••• •••• •••• {obj.card_number[-4:]}"
+        return None
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = [
+            'product_id', 'product_name', 'product_image',
+            'quantity', 'price', 'created_at'
+        ]
+        read_only_fields = fields
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    status_updates = serializers.SerializerMethodField()
+    shipping_address = AddressSerializer(read_only=True)
+    payment_method = PaymentMethodSerializer(read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'order_number', 'status', 'total_amount',
+            'shipping_address', 'payment_method', 'created_at',
+            'updated_at', 'estimated_delivery', 'items', 'status_updates'
+        ]
+        read_only_fields = fields
+    
+    def get_status_updates(self, obj):
+        updates = obj.status_updates.order_by('update_time')
+        return [
+            {
+                'status': update.get_status_display(),
+                'update_time': update.update_time,
+                'notes': update.notes
+            }
+            for update in updates
+        ]
+
+class WishlistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wishlist
+        fields = [
+            'id', 'product_id', 'product_name', 'product_image',
+            'price', 'on_sale', 'sale_price', 'added_at'
+        ]
+        read_only_fields = fields
+
+class ReturnRequestSerializer(serializers.ModelSerializer):
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=Order.objects.all(),
+        write_only=True
+    )
+    order_details = OrderSerializer(source='order', read_only=True)
+    
+    class Meta:
+        model = ReturnRequest
+        fields = [
+            'id', 'order', 'order_details', 'reason', 'notes',
+            'status', 'refund_amount', 'created_at', 'updated_at',
+            'completion_date'
+        ]
+        read_only_fields = [
+            'status', 'refund_amount', 'created_at', 'updated_at',
+            'completion_date', 'order_details'
+        ]
+
+class TransactionSerializer(serializers.ModelSerializer):
+    order = serializers.PrimaryKeyRelatedField(read_only=True)
+    invoice = serializers.PrimaryKeyRelatedField(read_only=True)
+    payment_method = PaymentMethodSerializer(read_only=True)
+    
+    class Meta:
+        model = Transaction
+        fields = [
+            'id', 'transaction_type', 'amount', 'description',
+            'status', 'payment_method', 'order', 'invoice',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = fields
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    order = OrderSerializer(read_only=True)
+    
+    class Meta:
+        model = Invoice
+        fields = [
+            'id', 'invoice_number', 'order', 'amount',
+            'status', 'created_at', 'due_date'
+        ]
+        read_only_fields = fields
+
+
+from rest_framework import serializers
+from .models import OrderBuyer, OrderItem, Product, Address
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'image']
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'quantity', 'price']
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = ['id', 'full_name', 'street', 'city', 'state', 'zip_code', 'phone']
+
+class OrderBuyerSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+    address = AddressSerializer()
+
+    class Meta:
+        model = OrderBuyer
+        fields = ['id', 'buyer', 'status', 'created_at', 'subtotal', 'shipping', 'total', 'items', 'address']

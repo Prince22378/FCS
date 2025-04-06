@@ -1,0 +1,64 @@
+.checkout-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.shipping-address h3,
+.payment-method h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.shipping-address input,
+.upi-details input,
+.card-details input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.address-row,
+.card-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.address-row input,
+.card-row input {
+    flex: 1;
+}
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.payment-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.place-order-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1rem;
+}

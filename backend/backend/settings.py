@@ -141,6 +141,7 @@ REST_FRAMEWORK = {
     )
 }
 
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -184,4 +185,5 @@ EMAIL_HOST_PASSWORD = 'akow jlpe zypa srbo'
 
 
 RECAPTCHA_SECRET_KEY = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+
 

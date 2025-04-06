@@ -55,7 +55,10 @@ const SellerDashboard = () => {
                     <Link to="/seller/orders" className="btn-secondary">
                         📦 View Orders
                     </Link>
-                    <button className="btn-success">💰 Withdraw Earnings</button>
+                    <Link to="/seller/withdraw" className="btn-success">
+                        💰 Withdraw Earnings
+                    </Link>
+
                 </div>
             </section>
 

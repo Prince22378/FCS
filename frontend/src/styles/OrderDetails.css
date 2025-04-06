@@ -1,0 +1,87 @@
+.order-details-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 1rem;
+  }
+  
+  .order-status {
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .status-delivered {
+    color: #4CAF50;
+  }
+  
+  .status-shipped {
+    color: #2196F3;
+  }
+  
+  .status-pending {
+    color: #FF9800;
+  }
+  
+  .order-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  
+  .order-items {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .order-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .order-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+  
+  .order-summary {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  
+  .summary-row.total {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin: 1rem 0;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+  }
+  
+  .shipping-address {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+  }
+  
+  .track-order-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1rem;
+  }

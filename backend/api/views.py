@@ -2,11 +2,14 @@ from django.conf import settings
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Q, Subquery, OuterRef
+from django.db import models
+
 from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP
 
 from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer, SendOTPSerializer, VerifyOTPSerializer
 
 from rest_framework import serializers 
+from rest_framework.pagination import PageNumberPagination
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -21,6 +24,8 @@ from rest_framework import viewsets, permissions
 from .models import Post, Reaction, Comment, Profile
 from .serializer import PostSerializer, CommentSerializer, ReactionSerializer, ProfileSerializer
 from django.shortcuts import get_object_or_404
+
+from django.http import FileResponse
 
 
 from rest_framework.generics import ListAPIView
@@ -37,7 +42,17 @@ from .models import Order
 from .serializer import ListingSerializer, OrderSerializer
 from rest_framework import generics, permissions
 
-from .models import Listing, Order, Withdrawal
+from .models import (Listing, Order, Withdrawal, BuyerProfile, Address, PaymentMethod, Order, OrderItem, Wishlist, ReturnRequest, Transaction, Invoice, OrderStatusUpdate)
+
+from .serializer import (
+    BuyerProfileSerializer, AddressSerializer, 
+    PaymentMethodSerializer, OrderSerializer,
+    OrderItemSerializer, WishlistSerializer,
+    ReturnRequestSerializer, TransactionSerializer,
+    InvoiceSerializer
+)
+
+
 from .serializer import (
     ListingSerializer, 
     OrderSerializer,
@@ -931,3 +946,498 @@ class WithdrawalAPI(APIView):
             'success': False,
             'errors': serializer.errors
         }, status=400)
+        
+
+
+
+# Buyer
+
+class BuyerProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = BuyerProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        profile, created = BuyerProfile.objects.get_or_create(user=self.request.user)
+        return profile
+
+class AddressListCreateView(generics.ListCreateAPIView):
+    serializer_class = AddressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.addresses.all()
+
+    def perform_create(self, serializer):
+        address = serializer.save(user=self.request.user)
+        # If this is the first address or user marked it as default, set as default
+        if self.request.user.addresses.count() == 1 or address.is_default:
+            self.request.user.addresses.exclude(id=address.id).update(is_default=False)
+            address.is_default = True
+            address.save()
+
+class AddressDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AddressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.addresses.all()
+
+    def perform_update(self, serializer):
+        address = serializer.save()
+        # If marked as default, update other addresses
+        if address.is_default:
+            self.request.user.addresses.exclude(id=address.id).update(is_default=False)
+
+class SetDefaultAddressView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        address = get_object_or_404(Address, pk=pk, user=request.user)
+        request.user.addresses.exclude(id=address.id).update(is_default=False)
+        address.is_default = True
+        address.save()
+        return Response({'status': 'address set as default'}, status=status.HTTP_200_OK)
+
+class PaymentMethodListCreateView(generics.ListCreateAPIView):
+    serializer_class = PaymentMethodSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.payment_methods.all()
+
+    def perform_create(self, serializer):
+        payment_method = serializer.save(user=self.request.user)
+        # If this is the first payment method or user marked it as default, set as default
+        if self.request.user.payment_methods.count() == 1 or payment_method.is_default:
+            self.request.user.payment_methods.exclude(id=payment_method.id).update(is_default=False)
+            payment_method.is_default = True
+            payment_method.save()
+
+class PaymentMethodDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PaymentMethodSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.payment_methods.all()
+
+    def perform_update(self, serializer):
+        payment_method = serializer.save()
+        # If marked as default, update other payment methods
+        if payment_method.is_default:
+            self.request.user.payment_methods.exclude(id=payment_method.id).update(is_default=False)
+
+class SetDefaultPaymentMethodView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        payment_method = get_object_or_404(PaymentMethod, pk=pk, user=request.user)
+        request.user.payment_methods.exclude(id=payment_method.id).update(is_default=False)
+        payment_method.is_default = True
+        payment_method.save()
+        return Response({'status': 'payment method set as default'}, status=status.HTTP_200_OK)
+
+class OrderListView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.orders.all().order_by('-created_at')
+
+class RecentOrdersView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.orders.all().order_by('-created_at')[:5]
+
+class OrderDetailView(generics.RetrieveAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.orders.all()
+
+class OrderHistoryView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = self.request.user.orders.all().order_by('-created_at')
+        
+        # Filter by status if provided
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Filter by year if provided
+        year_filter = self.request.query_params.get('year', None)
+        if year_filter:
+            queryset = queryset.filter(created_at__year=year_filter)
+        
+        return queryset
+
+class TrackOrderView(generics.RetrieveAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        order_id = self.kwargs.get('pk')
+        if order_id == 'latest':
+            return self.request.user.orders.order_by('-created_at').first()
+        return get_object_or_404(Order, pk=order_id, user=self.request.user)
+
+class UpdateOrderStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        order = get_object_or_404(Order, pk=pk, user=request.user)
+        new_status = request.data.get('status')
+        
+        if not new_status:
+            return Response({'error': 'Status is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate status transition
+        valid_transitions = {
+            'pending': ['processing', 'cancelled'],
+            'processing': ['shipped', 'cancelled'],
+            'shipped': ['delivered'],
+            'delivered': [],
+            'cancelled': []
+        }
+        
+        if new_status not in valid_transitions.get(order.status, []):
+            return Response(
+                {'error': f'Invalid status transition from {order.status} to {new_status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        order.status = new_status
+        order.save()
+        
+        # Create status update record
+        OrderStatusUpdate.objects.create(
+            order=order,
+            status=new_status,
+            notes=f"Status changed to {new_status}"
+        )
+        
+        return Response(OrderSerializer(order).data)
+
+class WishlistListView(generics.ListCreateAPIView):
+    serializer_class = WishlistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.wishlist_items.all().order_by('-added_at')
+
+    def perform_create(self, serializer):
+        product_id = serializer.validated_data.get('product_id')
+        # Check if product already exists in wishlist
+        if self.request.user.wishlist_items.filter(product_id=product_id).exists():
+            raise serializers.ValidationError("Product already in wishlist")
+        serializer.save(user=self.request.user)
+
+class WishlistDetailView(generics.RetrieveDestroyAPIView):
+    serializer_class = WishlistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.wishlist_items.all()
+
+class EligibleReturnOrdersView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get delivered orders within the last 30 days that haven't been returned
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        return self.request.user.orders.filter(
+            status='delivered',
+            created_at__gte=thirty_days_ago
+        ).exclude(
+            returns__status__in=['pending', 'approved', 'completed']
+        )
+
+class ReturnRequestListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReturnRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.return_requests.all().order_by('-created_at')
+
+    def perform_create(self, serializer):
+        order_id = serializer.validated_data.get('order').id
+        order = get_object_or_404(Order, pk=order_id, user=self.request.user)
+        
+        # Validate order is eligible for return
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        if order.status != 'delivered' or order.created_at < thirty_days_ago:
+            raise serializers.ValidationError("Order is not eligible for return")
+        
+        # Calculate refund amount (full amount for simplicity)
+        refund_amount = order.total_amount
+        
+        return_request = serializer.save(
+            user=self.request.user,
+            refund_amount=refund_amount
+        )
+        
+        # Create a refund transaction record
+        Transaction.objects.create(
+            user=self.request.user,
+            transaction_type='refund',
+            amount=refund_amount,
+            description=f"Refund for return request #{return_request.id}",
+            status='pending',
+            order=order
+        )
+
+class ReturnRequestDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = ReturnRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.return_requests.all()
+
+    def perform_update(self, serializer):
+        return_request = serializer.save()
+        
+        # If status changed to completed, update transaction
+        if return_request.status == 'completed' and not return_request.completion_date:
+            return_request.completion_date = timezone.now()
+            return_request.save()
+            
+            # Update transaction status
+            transaction = Transaction.objects.filter(
+                order=return_request.order,
+                transaction_type='refund'
+            ).first()
+            if transaction:
+                transaction.status = 'completed'
+                transaction.save()
+
+class CancelReturnRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        return_request = get_object_or_404(ReturnRequest, pk=pk, user=request.user)
+        
+        if return_request.status != 'pending':
+            return Response(
+                {'error': 'Only pending return requests can be cancelled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return_request.status = 'cancelled'
+        return_request.save()
+        
+        # Update transaction status
+        transaction = Transaction.objects.filter(
+            order=return_request.order,
+            transaction_type='refund'
+        ).first()
+        if transaction:
+            transaction.status = 'failed'
+            transaction.save()
+        
+        return Response({'status': 'return request cancelled'})
+
+class TransactionListView(generics.ListAPIView):
+    serializer_class = TransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.transactions.all().order_by('-created_at')
+
+class InvoiceListView(generics.ListAPIView):
+    serializer_class = InvoiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Invoice.objects.filter(order__user=self.request.user).order_by('-created_at')
+
+class DownloadInvoiceView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        invoice = get_object_or_404(Invoice, pk=pk, order__user=request.user)
+        
+        if not invoice.pdf_file:
+            return Response(
+                {'error': 'Invoice PDF not available'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        response = FileResponse(invoice.pdf_file)
+        response['Content-Disposition'] = f'attachment; filename="invoice_{invoice.invoice_number}.pdf"'
+        return response
+
+class BuyerDashboardStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Get recent orders count (last 30 days)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        recent_orders = request.user.orders.filter(created_at__gte=thirty_days_ago).count()
+        
+        # Get wishlist items count
+        wishlist_items = request.user.wishlist_items.count()
+        
+        # Get pending refund amount
+        pending_refunds = request.user.return_requests.filter(
+            status__in=['pending', 'approved']
+        ).aggregate(total=models.Sum('refund_amount'))['total'] or 0
+        
+        return Response({
+            'active_orders': recent_orders,
+            'wishlist_items': wishlist_items,
+            'pending_refunds': pending_refunds
+        })
+    
+class ProductPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class PublicProductListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        listings = Listing.objects.filter(status='active').order_by('-created_at')
+        paginator = ProductPagination()
+        result_page = paginator.paginate_queryset(listings, request)
+        serializer = ListingSerializer(result_page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
+    
+
+from django.http import JsonResponse
+from django.core.mail import send_mail
+import random
+
+def send_payment_otp(request):
+    if request.method == 'POST':
+        upi_id = request.POST.get('upiId')
+        otp = str(random.randint(100000, 999999))  # Generate 6-digit OTP
+        
+        # Store OTP in session/database (simplified example)
+        request.session['payment_otp'] = otp
+        request.session['upi_id'] = upi_id
+        
+        # Send OTP via email (using your existing EMAIL_BACKEND)
+        send_mail(
+            'UPI Payment OTP',
+            f'Your OTP for UPI payment is: {otp}',
+            'meetpalfcs@gmail.com',
+            [request.user.email],  # Assuming user is logged in
+            fail_silently=False,
+        )
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=400)
+
+def verify_payment_otp(request):
+    if request.method == 'POST':
+        user_otp = request.POST.get('otp')
+        stored_otp = request.session.get('payment_otp')
+        
+        if user_otp == stored_otp:
+            # Clear OTP after successful verification
+            del request.session['payment_otp']
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False}, status=400)
+
+def confirm_payment(request):
+    # Mock payment confirmation (replace with actual logic)
+    return JsonResponse({'success': True})
+
+
+from rest_framework import generics, status
+from rest_framework.response import Response
+from .models import OrderBuyer, OrderItem, Address, Product
+from .serializer import OrderBuyerSerializer, AddressSerializer
+from django.contrib.auth import get_user_model
+import random
+
+User = get_user_model()
+
+class CartView(generics.GenericAPIView):
+    def post(self, request):
+        # Simulate cart storage in session (or use Redis in production)
+        request.session['cart'] = request.data.get('items', [])
+        return Response({"status": "Cart updated"})
+
+class CheckoutView(generics.CreateAPIView):
+    serializer_class = OrderBuyerSerializer
+
+    def create(self, request):
+        cart_items = request.session.get('cart', [])
+        if not cart_items:
+            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate totals
+        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
+        shipping = 0 if subtotal > 1000 else 50
+        total = subtotal + shipping
+
+        # Create order
+        order = OrderBuyer.objects.create(
+            buyer=request.user,
+            subtotal=subtotal,
+            shipping=shipping,
+            total=total,
+            payment_method=request.data.get('payment_method', 'UPI'),
+            upi_id=request.data.get('upi_id')
+        )
+
+        # Add items
+        for item in cart_items:
+            product = Product.objects.get(id=item['product_id'])
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                quantity=item['quantity'],
+                price=item['price']
+            )
+
+        # Clear cart
+        request.session['cart'] = []
+
+        return Response(OrderBuyerSerializer(order).data, status=status.HTTP_201_CREATED)
+
+class OrderDetailsView(generics.RetrieveAPIView):
+    queryset = OrderBuyer.objects.all()
+    serializer_class = OrderBuyerSerializer
+    lookup_field = 'id'
+
+class AddressView(generics.ListCreateAPIView):
+    serializer_class = AddressSerializer
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class SendPaymentOTPView(generics.GenericAPIView):
+    def post(self, request):
+        otp = str(random.randint(100000, 999999))
+        request.session['payment_otp'] = otp
+
+        # Send OTP via email (using your existing EMAIL_BACKEND)
+        send_mail(
+            'Payment OTP',
+            f'Your OTP is: {otp}',
+            'meetpalfcs@gmail.com',
+            [request.user.email],
+            fail_silently=False,
+        )
+        return Response({"status": "OTP sent"})
+    
+class VerifyPaymentOTPView(generics.GenericAPIView):
+    def post(self, request):
+        user_otp = request.data.get('otp')
+        stored_otp = request.session.get('payment_otp')
+        
+        if user_otp == stored_otp:
+            del request.session['payment_otp']
+            return Response({"success": True})
+        return Response({"success": False}, status=400)

@@ -1,0 +1,166 @@
+.invoices-billing {
+    width: 100%;
+}
+
+.invoices-billing h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+.loading {
+    padding: 2rem;
+    text-align: center;
+    color: #666;
+}
+
+.invoices-container,
+.billing-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.year-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.year-filter label {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.year-filter select {
+    padding: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    background-color: white;
+    font-size: 0.9rem;
+}
+
+.no-invoices,
+.no-billing {
+    padding: 2rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.invoices-table,
+.billing-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoices-table th,
+.invoices-table td,
+.billing-table th,
+.billing-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.invoices-table th,
+.billing-table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.invoices-table tr:hover,
+.billing-table tr:hover {
+    background-color: #f8fafc;
+}
+
+.status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status.paid {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status.failed {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.download-btn {
+    padding: 0.5rem 1rem;
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    border: none;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.download-btn:hover {
+    background-color: #c7d2fe;
+}
+
+.invoice-id {
+    display: block;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
+.amount {
+    font-weight: 600;
+}
+
+.amount.positive {
+    color: #16a34a;
+}
+
+.amount.negative {
+    color: #dc2626;
+}
+
+@media (max-width: 768px) {
+
+    .invoices-table,
+    .billing-table {
+        display: block;
+        overflow-x: auto;
+    }
+}

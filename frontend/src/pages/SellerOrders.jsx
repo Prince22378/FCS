@@ -6,7 +6,7 @@ import '../styles/SellerOrders.css';
 const SellerOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [filter, setFilter] = useState('all');
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -19,113 +19,111 @@ const SellerOrders = () => {
                 setLoading(false);
             }
         };
+
         fetchOrders();
     }, []);
 
-    const filteredOrders = statusFilter === 'all' 
-        ? orders 
-        : orders.filter(order => order.status === statusFilter);
+    const filteredOrders = filter === 'all'
+        ? orders
+        : orders.filter(order => order.status === filter);
 
-    const updateOrderStatus = async (orderId, newStatus) => {
+    const updateOrderStatus = async (orderId, status) => {
         try {
-            await api.patch(`/api/seller/orders/${orderId}/`, { status: newStatus });
-            setOrders(orders.map(order => 
-                order.id === orderId ? { ...order, status: newStatus } : order
+            await api.put(`/api/seller/orders/${orderId}`, { status });
+            setOrders(prev => prev.map(order =>
+                order.id === orderId ? { ...order, status } : order
             ));
         } catch (error) {
             console.error('Error updating order:', error);
         }
     };
 
-    if (loading) return <div className="loading">Loading orders...</div>;
+    const getStatusClass = (status) => {
+        switch (status) {
+            case 'completed': return 'status-completed';
+            case 'shipped': return 'status-shipped';
+            case 'cancelled': return 'status-cancelled';
+            default: return 'status-pending';
+        }
+    };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Your Orders</h1>
-                <div className="flex items-center space-x-4">
-                    <span>Filter:</span>
-                    <select 
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="p-2 border rounded"
-                    >
-                        <option value="all">All</option>
-                        <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
+        <div className="seller-orders">
+            <h1>Your Orders</h1>
+
+            <div className="filter-buttons">
+                <button
+                    onClick={() => setFilter('all')}
+                    className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                >
+                    All
+                </button>
+                <button
+                    onClick={() => setFilter('pending')}
+                    className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
+                >
+                    Pending
+                </button>
+                <button
+                    onClick={() => setFilter('shipped')}
+                    className={`filter-btn ${filter === 'shipped' ? 'active' : ''}`}
+                >
+                    Shipped
+                </button>
+                <button
+                    onClick={() => setFilter('completed')}
+                    className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+                >
+                    Completed
+                </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left">Order ID</th>
-                            <th className="px-6 py-3 text-left">Buyer</th>
-                            <th className="px-6 py-3 text-left">Product</th>
-                            <th className="px-6 py-3 text-left">Date</th>
-                            <th className="px-6 py-3 text-left">Amount</th>
-                            <th className="px-6 py-3 text-left">Status</th>
-                            <th className="px-6 py-3 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredOrders.map(order => (
-                            <tr key={order.id} className="border-b">
-                                <td className="px-6 py-4">#{order.id}</td>
-                                <td className="px-6 py-4">{order.buyer_name}</td>
-                                <td className="px-6 py-4">
-                                    <Link 
-                                        to={`/listings/${order.listing}`}
-                                        className="text-blue-600 hover:underline"
-                                    >
-                                        {order.listing_title}
-                                    </Link>
-                                </td>
-                                <td className="px-6 py-4">
-                                    {new Date(order.created_at).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4">₹{order.price_at_purchase}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${
-                                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                        'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                        {order.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    {order.status === 'pending' && (
-                                        <>
-                                            <button
-                                                onClick={() => updateOrderStatus(order.id, 'completed')}
-                                                className="text-green-600 hover:underline mr-2"
-                                            >
-                                                Complete
-                                            </button>
-                                            <button
-                                                onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                                                className="text-red-600 hover:underline"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </>
-                                    )}
-                                    <Link
-                                        to={`/seller/orders/${order.id}`}
-                                        className="text-blue-600 hover:underline ml-2"
-                                    >
-                                        Details
-                                    </Link>
-                                </td>
+            {loading ? (
+                <div className="loading">Loading orders...</div>
+            ) : (
+                <div className="orders-table-container">
+                    <table className="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {filteredOrders.map(order => (
+                                <tr key={order.id}>
+                                    <td>#{order.id}</td>
+                                    <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                                    <td>{order.buyer_name}</td>
+                                    <td>₹{order.total_amount}</td>
+                                    <td>
+                                        <span className={`status-badge ${getStatusClass(order.status)}`}>
+                                            {order.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <Link to={`/seller/orders/${order.id}`} className="view-link">
+                                            View
+                                        </Link>
+                                        {order.status === 'pending' && (
+                                            <button
+                                                onClick={() => updateOrderStatus(order.id, 'shipped')}
+                                                className="status-action"
+                                            >
+                                                Ship Order
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };

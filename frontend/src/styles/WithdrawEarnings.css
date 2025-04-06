@@ -1,0 +1,131 @@
+.withdraw-earnings {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.withdraw-earnings h1 {
+    font-size: 1.875rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.alert-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.withdraw-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.balance-card,
+.bank-card,
+.history-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.balance-card h2,
+.bank-card h2,
+.history-card h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.balance-amount {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
+
+.balance-label {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-primary:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.history-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    border: 1px dashed #d1d5db;
+    border-radius: 0.375rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem 0;
+    color: #6b7280;
+}
+
+@media (max-width: 768px) {
+    .withdraw-grid {
+        grid-template-columns: 1fr;
+    }
+}

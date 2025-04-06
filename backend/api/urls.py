@@ -15,6 +15,29 @@ from .views import MarketplaceListAPI
 from .views import BuyerMarketplaceAPI
 from .views import CreateListingAPI
 
+from .views import (
+    CartView,
+    CheckoutView,
+    OrderDetailsView,
+    AddressView,
+    SendPaymentOTPView,
+    VerifyPaymentOTPView
+)
+
+
+from .views import (
+    BuyerProfileView, AddressListCreateView, AddressDetailView, SetDefaultAddressView,
+    PaymentMethodListCreateView, PaymentMethodDetailView, SetDefaultPaymentMethodView,
+    OrderListView, RecentOrdersView, OrderDetailView, OrderHistoryView, TrackOrderView,
+    UpdateOrderStatusView, WishlistListView, WishlistDetailView, EligibleReturnOrdersView,
+    ReturnRequestListCreateView, ReturnRequestDetailView, CancelReturnRequestView,
+    TransactionListView, InvoiceListView, DownloadInvoiceView, BuyerDashboardStatsView
+)
+
+from .views import PublicProductListView
+
+from .views import send_payment_otp, verify_payment_otp, confirm_payment
+
 router = DefaultRouter()
 router.register(r'posts', PostViewSet)
 
@@ -86,6 +109,58 @@ urlpatterns = [
     
     # Withdrawal endpoint
     path('seller/withdraw/', views.WithdrawalAPI.as_view(), name='seller-withdraw'),
+  
+
+    # Buyer Profile
+    path('profile/', BuyerProfileView.as_view(), name='buyer-profile'),
+    
+    # Addresses
+    path('addresses/', AddressListCreateView.as_view(), name='address-list'),
+    path('addresses/<int:pk>/', AddressDetailView.as_view(), name='address-detail'),
+    path('addresses/<int:pk>/set-default/', SetDefaultAddressView.as_view(), name='set-default-address'),
+    
+    # Payment Methods
+    path('payment-methods/', PaymentMethodListCreateView.as_view(), name='payment-method-list'),
+    path('payment-methods/<int:pk>/', PaymentMethodDetailView.as_view(), name='payment-method-detail'),
+    path('payment-methods/<int:pk>/set-default/', SetDefaultPaymentMethodView.as_view(), name='set-default-payment-method'),
+    
+    # Orders
+    path('orders/', OrderListView.as_view(), name='order-list'),
+    path('orders/recent/', RecentOrdersView.as_view(), name='recent-orders'),
+    path('orders/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
+    path('orders/history/', OrderHistoryView.as_view(), name='order-history'),
+    path('orders/track/<pk>/', TrackOrderView.as_view(), name='track-order'),
+    path('orders/<int:pk>/update-status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
+    
+    # Wishlist
+    path('wishlist/', WishlistListView.as_view(), name='wishlist-list'),
+    path('wishlist/<int:pk>/', WishlistDetailView.as_view(), name='wishlist-detail'),
+    
+    # Returns & Refunds
+    path('returns/eligible-orders/', EligibleReturnOrdersView.as_view(), name='eligible-return-orders'),
+    path('returns/', ReturnRequestListCreateView.as_view(), name='return-request-list'),
+    path('returns/<int:pk>/', ReturnRequestDetailView.as_view(), name='return-request-detail'),
+    path('returns/<int:pk>/cancel/', CancelReturnRequestView.as_view(), name='cancel-return-request'),
+    
+    # Transactions & Invoices
+    path('transactions/', TransactionListView.as_view(), name='transaction-list'),
+    path('invoices/', InvoiceListView.as_view(), name='invoice-list'),
+    path('invoices/<int:pk>/download/', DownloadInvoiceView.as_view(), name='download-invoice'),
+    
+    # Dashboard Stats
+    path('stats/', BuyerDashboardStatsView.as_view(), name='buyer-stats'),
+    path('api/listings/', PublicProductListView.as_view(), name='public-listings'),
+
+    path('api/send-payment-otp/', send_payment_otp),
+    path('api/verify-payment-otp/', verify_payment_otp),
+    path('api/confirm-payment/', confirm_payment),
+
+    path('cart/', CartView.as_view(), name='cart'),
+    path('checkout/', CheckoutView.as_view(), name='checkout'),
+    path('orders/<int:id>/', OrderDetailsView.as_view(), name='order-details'),
+    path('addresses/', AddressView.as_view(), name='address-list'),
+    path('send-payment-otp/', SendPaymentOTPView.as_view(), name='send-payment-otp'),
+    path('verify-payment-otp/', VerifyPaymentOTPView.as_view(), name='verify-payment-otp'),
 ]
 
 
