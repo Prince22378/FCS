@@ -446,38 +446,38 @@ class Withdrawal(models.Model):
 #     def __str__(self):
 #         return f"Order #{self.id} - {self.listing.title}"
 
-class Order(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-    ]
+# class Order(models.Model):
+#     STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('completed', 'Completed'),
+#     ]
     
-    buyer = models.ForeignKey(User, on_delete=models.CASCADE)
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
+#     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
+#     listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+#     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Order #{self.id}"
+#     def __str__(self):
+#         return f"Order #{self.id}"
     
-class Withdrawal(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('processed', 'Processed'),
-        ('rejected', 'Rejected'),
-    ]
+# class Withdrawal(models.Model):
+#     STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('processed', 'Processed'),
+#         ('rejected', 'Rejected'),
+#     ]
     
-    PAYMENT_METHODS = [
-        ('bank_transfer', 'Bank Transfer'),
-        ('upi', 'UPI'),
-        ('paypal', 'PayPal'),
-    ]
+#     PAYMENT_METHODS = [
+#         ('bank_transfer', 'Bank Transfer'),
+#         ('upi', 'UPI'),
+#         ('paypal', 'PayPal'),
+#     ]
     
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
+#     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
+#     amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+#     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+#     created_at = models.DateTimeField(auto_now_add=True)
     
-    def __str__(self):
-        return f"Withdrawal #{self.id} - {self.seller.username}"
+#     def __str__(self):
+#         return f"Withdrawal #{self.id} - {self.seller.username}"
