@@ -288,10 +288,10 @@ const AdminDashboard = () => {
     <div className="admin-container">
       <div className="sidebar">
         <ul>
-          <li><a href="/admin_dashboard">Dashboard</a></li>
+          <li><a href="/admin-dashboard">Dashboard</a></li>
           <li><a href="/user_management">User Management</a></li>
-          <li><a href="/admin_moderation">Moderation</a></li>
-          <li><a href="/security_audits">Security Audits</a></li>
+          {/* <li><a href="/admin_moderation">Moderation</a></li> */}
+          {/* <li><a href="/security_audits">Security Audits</a></li> */}
           <li><a href="/reports_logs">Reports & Logs</a></li> {/* Added for Reports & Logs */}
           <li><a href="/">Logout</a></li>
         </ul>
