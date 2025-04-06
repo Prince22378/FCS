@@ -9,7 +9,7 @@ import "../styles/ChatRoomPage.css";
 const ec = new EC("p256"); // Using P-256 Curve
 
 // import { ACCESS_TOKEN } from "../constants";
-import "../styles/ChatRoomPage.css";
+// import "../styles/ChatRoomPage.css";
 import GroupChat from "./GroupChat"; // ✅ Make sure this path is correct
 
 const ChatroomPage = () => {
@@ -165,8 +165,7 @@ const ChatroomPage = () => {
     const formData = new FormData();
     formData.append("sender", currentUserId);
     formData.append("reciever", selectedFriend.user.id);
-    console.log("Selected Friend: ", selectedFriend);
-
+  
     // If there's a message, include it
     if (newMessage.trim() && friendPublicKey) {
       formData.append("message", encryptMessage(newMessage.trim(), friendPublicKey));
@@ -240,17 +239,14 @@ const ChatroomPage = () => {
   return (
     <div className="chatroom-container">
       <div className="chat-sidebar">
-        <div class="search-container">
-          <input 
-              type="text" 
-              class="search-input" 
-              placeholder="Search..." 
-            />
-            <button class="search-button">Search</button>
-          </div>
-
         <h2>ChatApp</h2>
-        <input className="search-input" placeholder="Search chat..." />
+        {/* <input className="search-input" placeholder="Search chat..." /> */}
+
+        <div className="search-bar-wrapper">
+          <input className="search-input" placeholder="Search chat..." />
+          {/* <span className="search-icon">🔍</span> */}
+        </div>
+
 
         <div className="sidebar-section">
           <h3>Friends</h3>
@@ -279,7 +275,15 @@ const ChatroomPage = () => {
 
         <div className="sidebar-section">
           <h3>Groups</h3>
-          <button onClick={() => setShowGroupOverlay(true)}>Create Group</button>
+          {/* <button onClick={() => setShowGroupOverlay(true)}>Create Group</button> */}
+          
+          <button
+            className="create-group-btn"
+            onClick={() => setShowGroupOverlay(true)}
+          >
+            Create Group
+          </button>
+
           {groups.map((group) => (
             <div
               key={group.id}
@@ -331,9 +335,6 @@ const ChatroomPage = () => {
         </div>
 
         <div className="chat-body">
-        {/* console.log("Message to send: ", newMessage);
-        console.log("Receiver: ", selectedFriend.user.id); */}
-
           {selectedGroup ? (
             <GroupChat selectedGroup={selectedGroup} currentUserId={currentUserId} />
           ) : selectedFriend ? (
@@ -342,17 +343,13 @@ const ChatroomPage = () => {
               return (
                 <div key={i} className={`chat-message ${isMe ? "sent" : "received"}`}>
                   {msg.message && <div>{decryptMessage(msg.message) || "[Encrypted]"}</div>}
-
                   {msg.media && (
-                    <div className="media-container">
-                      {msg.media.endsWith(".mp4") ? (
-                        <video src={`${api.defaults.baseURL}/api${msg.media}`} controls />
-                      ) : (
-                        <img src={`${api.defaults.baseURL}/api${msg.media}`} alt="media" />
-                      )}
-                    </div>
+                    msg.media.endsWith(".mp4") ? (
+                      <video src={`${api.defaults.baseURL}/api${msg.media}`} controls />
+                    ) : (
+                      <img src={`${api.defaults.baseURL}/api${msg.media}`} alt="media" />
+                    )
                   )}
-
                   <div className="chat-meta">
                     <small>{formatTime(msg.date)}</small>
                   </div>
@@ -366,95 +363,45 @@ const ChatroomPage = () => {
 
         {selectedFriend && !selectedGroup && (
           <div className="chat-input-container">
+          {mediaFile && (
+            <div className="media-preview">
+              {mediaFile.type.startsWith("video") ? (
+                <video src={URL.createObjectURL(mediaFile)} controls />
+              ) : (
+                <img src={URL.createObjectURL(mediaFile)} alt="preview" />
+              )}
+              <button className="remove-preview" onClick={() => setMediaFile(null)}>✖</button>
+            </div>
+          )}
+        
+          <div className="input-wrapper">
             <input
               type="text"
-              placeholder="Type a message..."
+              placeholder="type your message here..."
               value={newMessage}
-              onChange={handleTyping}
+              onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => {
-                // Check if the Enter key is pressed and Shift key is not pressed
                 if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault(); // Prevent the Enter key from inserting a newline
-                  handleSend(); // Send the message or media
+                  e.preventDefault();
+                  handleSend();
                 }
               }}
             />
-            <input
-              type="file"
-              accept="image/*,video/*"
-              onChange={(e) => setMediaFile(e.target.files[0])}
-            />
-            <button className="send-btn" onClick={handleSend}>Send</button>
-
-            {mediaFile && (
-              <div className="media-preview-wrapper">
-                <div className="media-preview-inner">
-                  <button className="remove-media" onClick={() => setMediaFile(null)}>✕</button>
-                  {mediaFile.type.startsWith("image/") ? (
-                    <img src={URL.createObjectURL(mediaFile)} alt="preview" />
-                  ) : (
-                    <video src={URL.createObjectURL(mediaFile)} controls />
-                  )}
-                </div>
-              </div>
-            )}
+            <div className="icon-buttons">
+              <label className="upload-icon">
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => setMediaFile(e.target.files[0])}
+                />
+                ⬆️
+              </label>
+              <button className="send-icon" onClick={handleSend}>➤</button>
+            </div>
           </div>
+        </div>
+        
         )}
-        {showGroupOverlay && currentStep === 1 && (
-    <div className="overlay">
-        <div className="overlay-content">
-            <h2>Create Group</h2>
-            <input
-                type="text"
-                placeholder="Enter Group Name"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                className="group-input"
-            />
-            <textarea
-                placeholder="Enter Group Bio"
-                value={groupBio}
-                onChange={(e) => setGroupBio(e.target.value)}
-                className="group-input"
-            />
-            <div className="overlay-actions">
-                <button onClick={() => setShowGroupOverlay(false)}>Cancel</button>
-                <button onClick={() => setCurrentStep(2)}>Next</button>
-            </div>
-        </div>
-    </div>
-)}
-
-{showGroupOverlay && currentStep === 2 && (
-    <div className="overlay">
-        <div className="overlay-content">
-            <h2>Select Members</h2>
-            <div className="friends-list">
-                {friendsList.map((friend) => (
-                    <div key={friend.id} className="friend-item">
-                        <input
-                            type="checkbox"
-                            id={friend.id}
-                            onChange={() => {
-                                setSelectedMembers((prevState) =>
-                                    prevState.includes(friend.id)
-                                        ? prevState.filter((id) => id !== friend.id)
-                                        : [...prevState, friend.id]
-                                );
-                            }}
-                        />
-                        <label htmlFor={friend.id}>{friend.full_name}</label>
-                    </div>
-                ))}
-            </div>
-            <div className="overlay-actions">
-                <button onClick={() => setCurrentStep(1)}>Back</button>
-                <button onClick={handleCreateGroup}>Create Group</button>
-            </div>
-        </div>
-    </div>
-)}
-
       </div>
     </div>
   );
