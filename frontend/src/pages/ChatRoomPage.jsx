@@ -34,6 +34,8 @@ const ChatroomPage = () => {
   const [privateKeyHex, setPrivateKeyHex] = useState("");
   const [groupImage, setGroupImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
 
 
   const isFetchingRef = useRef(false);
@@ -248,6 +250,14 @@ const ChatroomPage = () => {
     setSelectedFriend(null); // clear private chat
   };
 
+  const filteredFriends = friends.filter(friend =>
+    friend.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const filteredGroups = groups.filter(group =>
+    group.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="chatroom-container">
       <div className="chat-sidebar">
@@ -255,9 +265,22 @@ const ChatroomPage = () => {
         {/* <input className="search-input" placeholder="Search chat..." /> */}
 
         <div className="search-bar-wrapper">
-          <input className="search-input" placeholder="Search chat..." />
-          {/* <span className="search-icon">🔍</span> */}
+          <input
+            className="search-input"
+            placeholder="Search chat..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              className="clear-search-btn"
+              onClick={() => setSearchTerm("")}
+            >
+              ❌
+            </button>
+          )}
         </div>
+
 
 
         <div className="sidebar-section friends-section">
@@ -265,28 +288,37 @@ const ChatroomPage = () => {
             <h3>Friends</h3>
             {/* (Optional) add a button here if you want */}
           </div>
+
+          {searchTerm && (
+            <div style={{ paddingLeft: "10px", fontWeight: "bold" }}>Matching Friends</div>
+          )}
+
           <div className="friends-list">
-            {friends.map((friend) => (
-              <div
-                key={friend.id}
-                className={`chat-friend ${selectedFriend?.id === friend.id ? "active" : ""}`}
-                onClick={() => {
-                  setSelectedFriend(friend);
-                  setSelectedGroup(null);
-                }}
-              >
-                <img
-                  className="chat-avatar"
-                  src={
-                    friend.user?.id && friendImages[friend.user.id]
-                      ? `${api.defaults.baseURL}/api${friendImages[friend.user.id]}`
-                      : "/default-avatar.png"
-                  }
-                  alt={friend.full_name}
-                />
-                <span>{friend.full_name}</span>
-              </div>
-            ))}
+            {filteredFriends.length > 0 ? (
+              filteredFriends.map((friend) => (
+                <div
+                  key={friend.id}
+                  className={`chat-friend ${selectedFriend?.id === friend.id ? "active" : ""}`}
+                  onClick={() => {
+                    setSelectedFriend(friend);
+                    setSelectedGroup(null);
+                  }}
+                >
+                  <img
+                    className="chat-avatar"
+                    src={
+                      friend.user?.id && friendImages[friend.user.id]
+                        ? `${api.defaults.baseURL}/api${friendImages[friend.user.id]}`
+                        : "/default-avatar.png"
+                    }
+                    alt={friend.full_name}
+                  />
+                  <span>{friend.full_name}</span>
+                </div>
+              ))
+            ): searchTerm ? (
+              <div className="no-results">No matching friends</div>
+            ) : null}
           </div>
         </div>
 
@@ -302,8 +334,14 @@ const ChatroomPage = () => {
               Create Group
             </button>
           </div>
+
+          {searchTerm && (
+            <div style={{ paddingLeft: "10px", fontWeight: "bold" }}>Matching Groups</div>
+          )}
+
           <div className="groups-list">
-            {groups.map((group) => (
+            {filteredGroups.length > 0 ? (
+              filteredGroups.map((group) => (
               <div
                 key={group.id}
                 className={`chat-friend ${selectedGroup?.id === group.id ? "active" : ""}`}
@@ -323,9 +361,11 @@ const ChatroomPage = () => {
                 />
                 <span>{group.name}</span>
               </div>
-            ))}
+            ))
+          ): searchTerm ? (
+            <div className="no-results">No matching groups</div>
+          ) : null}
           </div>
-
         </div>
       </div>
 

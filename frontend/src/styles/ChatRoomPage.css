@@ -1342,3 +1342,38 @@
   height: 24px;
   cursor: pointer;
 }
+
+
+.search-bar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 35px 10px 12px;  /* right padding to give room for ❌ */
+  border-radius: 19px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #999;
+  cursor: pointer;
+  padding: 1px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.clear-search-btn:hover {
+  color: #000;
+}
