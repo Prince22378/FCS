@@ -33,6 +33,8 @@ const ChatroomPage = () => {
   const [friendPublicKey, setFriendPublicKey] = useState(null);
   const [privateKeyHex, setPrivateKeyHex] = useState("");
   const [groupImage, setGroupImage] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
 
   const isFetchingRef = useRef(false);
 
@@ -422,41 +424,8 @@ const ChatroomPage = () => {
               <button className="send-icon" onClick={handleSend}>➤</button>
             </div>
           </div>
-        </div>
-        
+        </div>    
         )}
-        {/* {showGroupOverlay && currentStep === 1 && (
-          <div className="overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <h2>Create Group</h2>
-              </div>
-              <div className="modal-body">
-                <input
-                  type="text"
-                  placeholder="Enter Group Name"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  className="group-input"
-                />
-                <textarea
-                  placeholder="Enter Group Bio"
-                  value={groupBio}
-                  onChange={(e) => setGroupBio(e.target.value)}
-                  className="group-textarea"
-                />
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-cancel" onClick={() => setShowGroupOverlay(false)}>
-                  Cancel
-                </button>
-                <button className="btn btn-next" onClick={() => setCurrentStep(2)}>
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        )} */}
 
         {showGroupOverlay && currentStep === 1 && (
           <div className="overlay">
@@ -479,26 +448,45 @@ const ChatroomPage = () => {
                   className="group-textarea"
                 />
                 <div className="group-image-input">
-                  <label className="upload-icon">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setGroupImage(e.target.files[0])}
-                    />
-                    Select Group Image
-                  </label>
-                  {groupImage && (
-                    <div className="group-image-preview">
-                      <img src={URL.createObjectURL(groupImage)} alt="Group Preview" />
-                      <button
-                        className="remove-preview"
-                        onClick={() => setGroupImage(null)}
-                      >
-                        ✖
-                      </button>
+                  <div
+                      className={`upload-dropzone ${isDragging ? "dragging" : ""}`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        const file = e.dataTransfer.files[0];
+                        if (file && file.type.startsWith("image/")) {
+                          setGroupImage(file);
+                        }
+                      }}
+                    >
+                      <span>📁 Click or Drag an image here</span>
+                      <input
+                        id="groupImageUpload"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setGroupImage(e.target.files[0])}
+                      />
                     </div>
-                  )}
-                </div>
+
+                    {groupImage && (
+                      <div className="group-image-preview">
+                        <img src={URL.createObjectURL(groupImage)} alt="Group Preview" />
+                        <button
+                          className="remove-preview"
+                          onClick={() => setGroupImage(null)}
+                        >
+                          ✖
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+
               </div>
               <div className="modal-footer">
                 <button className="btn btn-cancel" onClick={() => setShowGroupOverlay(false)}>
