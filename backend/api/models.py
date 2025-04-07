@@ -168,6 +168,12 @@ class GroupMessage(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender.username} in group {self.group.name}"
+    
+class GroupMessageKey(models.Model):
+    message = models.ForeignKey(GroupMessage, on_delete=models.CASCADE, related_name='keys')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE)
+    encrypted_key = models.TextField()
+
         
 class Listing(models.Model):
     STATUS_CHOICES = [

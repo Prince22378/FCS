@@ -28,8 +28,8 @@ from django.shortcuts import get_object_or_404
 from django.http import FileResponse
 
 
-from rest_framework.generics import ListAPIView
-from api.models import Comment, Report, Group, GroupMessage
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from api.models import Comment, Report, Group, GroupMessage, GroupMessageKey
 from api.serializer import CommentSerializer, ProfileVerifySerializer, VerificationPendingProfileSerializer, ReportSerializer, GroupSerializer, GroupMessageSerializer, ListingSerializer
 import random
 from django.core.mail import send_mail
@@ -41,7 +41,7 @@ from .models import Listing
 from .models import Order
 from .serializer import ListingSerializer, OrderSerializer
 from rest_framework import generics, permissions
-
+import json
 from .models import (Listing, Order, Withdrawal, BuyerProfile, Address, PaymentMethod, Order, OrderItem, Wishlist, ReturnRequest, Transaction, Invoice, OrderStatusUpdate)
 
 from .serializer import (
@@ -608,6 +608,10 @@ class GroupListView(ListAPIView):
     def get_queryset(self):
         return Group.objects.filter(members=self.request.user)
 
+class GroupDetailView(RetrieveAPIView):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [IsAuthenticated]
 
 # views.py
 class GroupChatMessageView(APIView):
@@ -621,13 +625,13 @@ class GroupChatMessageView(APIView):
         return Response(serializer.data)
 
     def post(self, request, group_id):
-        # Send a new message to the group
         group = get_object_or_404(Group, id=group_id)
         content = request.data.get("content")
         media = request.FILES.get("media")
+        encrypted_keys = request.data.getlist("encrypted_keys")
 
         if not content and not media:
-            return Response({"error": "Content or media required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Content or media required"}, status=400)
 
         message = GroupMessage.objects.create(
             group=group,
@@ -635,7 +639,19 @@ class GroupChatMessageView(APIView):
             content=content,
             media=media
         )
-        return Response(GroupMessageSerializer(message).data, status=status.HTTP_201_CREATED)
+
+        for ek_json in encrypted_keys:
+            try:
+                key_data = json.loads(ek_json)
+                GroupMessageKey.objects.create(
+                    message=message,
+                    recipient_id=key_data['recipient_id'],
+                    encrypted_key=key_data['encrypted_key']
+                )
+            except Exception as e:
+                print(f"Failed to save encrypted key: {e}")
+
+        return Response(GroupMessageSerializer(message).data, status=201)
 
 
 

@@ -311,10 +311,20 @@ class GroupSerializer(serializers.ModelSerializer):
 # serializers.py
 class GroupMessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer()
+    recipient_keys = serializers.SerializerMethodField()
 
     class Meta:
         model = GroupMessage
-        fields = ['sender', 'content', 'media', 'created_at']
+        fields = ['id', 'sender', 'content', 'media', 'created_at', 'recipient_keys']
+
+    def get_recipient_keys(self, obj):
+        return [
+            {
+                "recipient_id": key.recipient.id,
+                "encrypted_key": key.encrypted_key
+            }
+            for key in obj.keys.all()
+        ]
 
 
 class ListingSerializer(serializers.ModelSerializer):

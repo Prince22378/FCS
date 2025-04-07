@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView 
+from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView , GroupDetailView
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -85,6 +85,7 @@ urlpatterns = [
     path('groups/', GroupListView.as_view(), name='group_list'),
 
     path('groups/<int:group_id>/messages/', GroupChatMessageView.as_view()),
+    path("groups/<int:pk>/", views.GroupDetailView.as_view(), name="group-detail"),
 
     path('report/', ReportPostView.as_view(), name='report_post'),
     path('admin/reports/', ReportListView.as_view(), name='admin_reports'),

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "axios": "^1.8.1",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "elliptic": "^6.6.1",
     "i": "^0.3.7",
