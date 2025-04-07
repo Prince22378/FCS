@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import ProtectedRoute from "./ProtectedRoute";
+import { ACCESS_TOKEN } from "../constants";
+import { jwtDecode } from "jwt-decode";
 import api from "../api";
 
 function VerifiedRoute({ children }) {
@@ -8,8 +10,15 @@ function VerifiedRoute({ children }) {
     useEffect(() => {
         const checkVerification = async () => {
             try {
-                const response = await api.get("/api/user/me/"); // Adjust endpoint
-                setIsVerified(response.data.is_verified);
+                const token = localStorage.getItem(ACCESS_TOKEN);
+                if (!token) {
+                    setIsVerified(false);
+                    return;
+                }
+                const decodedToken = jwtDecode(token);
+                const userId = decodedToken.user_id;
+                const response = await api.get(`/api/profile/${userId}/`); 
+                setIsVerified(response.data.verified);
             } catch (error) {
                 console.error("Verification check failed:", error);
                 setIsVerified(false);
@@ -25,7 +34,7 @@ function VerifiedRoute({ children }) {
 
     return (
         <ProtectedRoute>
-            {isVerified ? children : <div>Please wait for admin verification</div>}
+            {isVerified ? children : <div>Only verified users can use marketplace, Please get verified first</div>}
         </ProtectedRoute>
     );
 }
