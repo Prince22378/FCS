@@ -1493,3 +1493,29 @@ class ReportUserView(APIView):
 
         return Response({"message": "User reported successfully."}, status=status.HTTP_201_CREATED)
 
+
+
+class ResolveUserReportsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, user_id):
+        UserReport.objects.filter(reported_user_id=user_id).delete()
+        return Response({"message": "Reports resolved."}, status=status.HTTP_200_OK)
+
+
+class DeleteUserAndDataView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+
+            # Delete related objects if needed
+            Post.objects.filter(user=user).delete()
+            Profile.objects.filter(user=user).delete()
+            UserReport.objects.filter(reported_user=user).delete()
+            user.delete()
+
+            return Response({"message": "User and associated data deleted."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
