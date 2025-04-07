@@ -32,6 +32,8 @@ const ChatroomPage = () => {
   const [groups, setGroups] = useState([]);
   const [friendPublicKey, setFriendPublicKey] = useState(null);
   const [privateKeyHex, setPrivateKeyHex] = useState("");
+  const [groupImage, setGroupImage] = useState(null);
+
   const isFetchingRef = useRef(false);
 
 
@@ -159,19 +161,22 @@ const ChatroomPage = () => {
   };
 
   const handleSend = async () => {
-    // Do not send if both message and media are empty
+    // Only abort if both text and media are missing
     if (!newMessage.trim() && !mediaFile) return;
   
     const formData = new FormData();
     formData.append("sender", currentUserId);
     formData.append("reciever", selectedFriend.user.id);
   
-    // If there's a message, include it
-    if (newMessage.trim() && friendPublicKey) {
-      formData.append("message", encryptMessage(newMessage.trim(), friendPublicKey));
-    }
+    // If there's text, encrypt and send it.
+    // Otherwise, if a media file exists, send a zero-width space as the message.
+    const messageToSend = newMessage.trim()
+      ? encryptMessage(newMessage.trim(), friendPublicKey)
+      : encryptMessage("\u200B", friendPublicKey);
   
-    // If there's a media file, include it
+    formData.append("message", messageToSend);
+  
+    // Always attach media if available.
     if (mediaFile) {
       formData.append("media", mediaFile);
     }
@@ -179,13 +184,16 @@ const ChatroomPage = () => {
     try {
       const res = await api.post("/api/send-messages/", formData);
       setMessages((prev) => [...prev, res.data]);
-      setNewMessage(""); // Clear the message input field
-      setMediaFile(null); // Clear the media file input
+      setNewMessage("");
+      setMediaFile(null);
     } catch (err) {
       console.error("Error sending message", err);
     }
   };
-
+  
+  
+  
+  
 
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
@@ -213,7 +221,7 @@ const ChatroomPage = () => {
     formData.append("name", groupName);
     formData.append("bio", groupBio);
     selectedMembers.forEach(id => formData.append("members", id));
-    if (mediaFile) formData.append("image", mediaFile);
+    if (groupImage) formData.append("image", groupImage);
   
     try {
       const res = await api.post("/api/create-group/", formData, {
@@ -224,14 +232,16 @@ const ChatroomPage = () => {
       setCurrentStep(1);
       setGroupName("");
       setGroupBio("");
-      setMediaFile(null);
+      setGroupImage(null);
       setSelectedMembers([]);
     } catch (err) {
       console.error("Error creating group", err);
     }
   };
+  
 
   const handleGroupSelect = (group) => {
+    console.log("Selected Group", group); 
     setSelectedGroup(group);
     setSelectedFriend(null); // clear private chat
   };
@@ -290,12 +300,15 @@ const ChatroomPage = () => {
               className={`chat-friend ${selectedGroup?.id === group.id ? "active" : ""}`}
               onClick={() => handleGroupSelect(group)}
             >
+              {/* {console.log("Group Image Path:", group.image)}   */}
               <img
                 className="chat-avatar"
                 src={
                   group.image
-                    ? `${api.defaults.baseURL}/api${group.image}`
-                    : "/group-default.png"
+                    ? group.image.startsWith("/media")
+                      ? `${api.defaults.baseURL}/api${group.image}`  // ✅ add /api only once
+                      : group.image  // already has full URL
+                    : `${api.defaults.baseURL}/api/media/group_images/default.png`
                 }
                 alt={group.name}
               />
@@ -324,9 +337,11 @@ const ChatroomPage = () => {
           )}
           {selectedGroup && (
             <div className="chat-title">
+              {/* {console.log("Selected Group Image:", selectedGroup.image)}  */}
               <img
                 className="chat-header-avatar"
-                src={selectedGroup.image ? `${api.defaults.baseURL}/api${selectedGroup.image}` : "/group-default.png"}
+                // src={selectedGroup.image ? `${api.defaults.baseURL}/api${selectedGroup.image}` : "/default.png"}
+                src={selectedGroup.image ? selectedGroup.image : `${api.defaults.baseURL}/api/media/group_images/default.png`}
                 alt={selectedGroup.name}
               />
               <span>{selectedGroup.name}</span>
@@ -402,41 +417,121 @@ const ChatroomPage = () => {
         </div>
         
         )}
+        {/* {showGroupOverlay && currentStep === 1 && (
+          <div className="overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>Create Group</h2>
+              </div>
+              <div className="modal-body">
+                <input
+                  type="text"
+                  placeholder="Enter Group Name"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="group-input"
+                />
+                <textarea
+                  placeholder="Enter Group Bio"
+                  value={groupBio}
+                  onChange={(e) => setGroupBio(e.target.value)}
+                  className="group-textarea"
+                />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-cancel" onClick={() => setShowGroupOverlay(false)}>
+                  Cancel
+                </button>
+                <button className="btn btn-next" onClick={() => setCurrentStep(2)}>
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )} */}
+
         {showGroupOverlay && currentStep === 1 && (
           <div className="overlay">
-            <div className="overlay-content">
-              <h2>Create Group</h2>
-              <input
-                type="text"
-                placeholder="Enter Group Name"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                className="group-input"
-              />
-              <textarea
-                placeholder="Enter Group Bio"
-                value={groupBio}
-                onChange={(e) => setGroupBio(e.target.value)}
-                className="group-input"
-              />
-              <div className="overlay-actions">
-                <button onClick={() => setShowGroupOverlay(false)}>Cancel</button>
-                <button onClick={() => setCurrentStep(2)}>Next</button>
+            <div className="modal">
+              <div className="modal-header">
+                <h2>Create Group</h2>
+              </div>
+              <div className="modal-body">
+                <input
+                  type="text"
+                  placeholder="Enter Group Name"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="group-input"
+                />
+                <textarea
+                  placeholder="Enter Group Bio"
+                  value={groupBio}
+                  onChange={(e) => setGroupBio(e.target.value)}
+                  className="group-textarea"
+                />
+                <div className="group-image-input">
+                  <label className="upload-icon">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setGroupImage(e.target.files[0])}
+                    />
+                    Select Group Image
+                  </label>
+                  {groupImage && (
+                    <div className="group-image-preview">
+                      <img src={URL.createObjectURL(groupImage)} alt="Group Preview" />
+                      <button
+                        className="remove-preview"
+                        onClick={() => setGroupImage(null)}
+                      >
+                        ✖
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-cancel" onClick={() => setShowGroupOverlay(false)}>
+                  Cancel
+                </button>
+                <button className="btn btn-next" onClick={() => setCurrentStep(2)}>
+                  Next
+                </button>
               </div>
             </div>
           </div>
         )}
 
+
         {showGroupOverlay && currentStep === 2 && (
           <div className="overlay">
-            <div className="overlay-content">
-              <h2>Select Members</h2>
-              <div className="friends-list">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>Select Members</h2>
+              </div>
+              <div className="modal-body friends-list">
                 {friendsList.map((friend) => (
                   <div key={friend.id} className="friend-item">
+                    {/* Left side: avatar + name */}
+                    <div className="friend-left">
+                      <img
+                        className="friend-avatar"
+                        src={
+                          friend.user?.id && friendImages[friend.user.id]
+                            ? `${api.defaults.baseURL}/api${friendImages[friend.user.id]}`
+                            : "/default-avatar.png"
+                        }
+                        alt={friend.full_name}
+                      />
+                      <span className="friend-name">{friend.full_name}</span>
+                    </div>
+
+                    {/* Right side: checkbox */}
                     <input
                       type="checkbox"
-                      id={friend.id}
+                      id={`friend-${friend.id}`}
                       onChange={() => {
                         setSelectedMembers((prevState) =>
                           prevState.includes(friend.id)
@@ -445,17 +540,24 @@ const ChatroomPage = () => {
                         );
                       }}
                     />
-                    <label htmlFor={friend.id}>{friend.full_name}</label>
                   </div>
                 ))}
+
               </div>
-              <div className="overlay-actions">
-                <button onClick={() => setCurrentStep(1)}>Back</button>
-                <button onClick={handleCreateGroup}>Create Group</button>
+              <div className="modal-footer">
+                <button className="btn btn-back" onClick={() => setCurrentStep(1)}>
+                  Back
+                </button>
+                <button className="btn btn-create" onClick={handleCreateGroup}>
+                  Create Group
+                </button>
               </div>
             </div>
           </div>
         )}
+
+
+
       </div>
     </div>
   );
