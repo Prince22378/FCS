@@ -367,9 +367,7 @@ class WithdrawalSerializer(serializers.ModelSerializer):
 
 # buyer
 from .models import (
-    BuyerProfile, Address, PaymentMethod, Order, 
-    OrderItem, Wishlist, ReturnRequest, 
-    Transaction, Invoice
+    Listing, Order, Withdrawal, BuyerProfile, Address, PaymentMethod, OrderBuyer, OrderItem, Wishlist, ReturnRequest, Transaction, Invoice, OrderStatusUpdate, Product
 )
 
 class BuyerProfileSerializer(serializers.ModelSerializer):
@@ -498,7 +496,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
 
 from rest_framework import serializers
-from .models import OrderBuyer, OrderItem, Product, Address
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:

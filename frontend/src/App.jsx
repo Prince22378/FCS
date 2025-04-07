@@ -12,6 +12,7 @@ import Homepage from "./pages/Home.jsx";
 import Register from "./pages/Register.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import VerifiedRoute from "./components/VerifiedRoute.jsx";
 import "./styles/global.css";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
@@ -107,17 +108,57 @@ function App() {
           }
         />
 
-        <Route path="/seller" element={<SellerDashboard />} />
-        <Route path="/seller/listings" element={<SellerListings />} />
+        {/* Seller routes - require verification */}
+        <Route
+          path="/seller"
+          element={
+            <VerifiedRoute>
+              <SellerDashboard />
+            </VerifiedRoute>
+          }
+        />
+        <Route
+          path="/seller/listings"
+          element={
+            <VerifiedRoute>
+              <SellerListings />
+            </VerifiedRoute>
+          }
+        />
+        <Route
+          path="/seller/orders"
+          element={
+            <VerifiedRoute>
+              <SellerOrders />
+            </VerifiedRoute>
+          }
+        />
+        <Route
+          path="/seller/listings/create"
+          element={
+            <VerifiedRoute>
+              <CreateListing />
+            </VerifiedRoute>
+          }
+        />
+        <Route
+          path="/seller/withdraw"
+          element={
+            <VerifiedRoute>
+              <WithdrawEarnings />
+            </VerifiedRoute>
+          }
+        />
 
-
-        <Route path="/marketplace" element={<Marketplace />} />
-
-        <Route path="/seller/listings" element={<SellerListings />} />
-        <Route path="/seller/orders" element={<SellerOrders />} />
-        <Route path="/seller/listings/create" element={<CreateListing />} />
-        <Route path="/seller/withdraw" element={<WithdrawEarnings />} />
-        <Route path="/buyer" element={<BuyerMarketplace />}>
+        {/* Buyer routes - require verification */}
+        <Route
+          path="/buyer"
+          element={
+            <VerifiedRoute>
+              <BuyerMarketplace />
+            </VerifiedRoute>
+          }
+        >
           <Route path="orders" element={<RecentOrders />} />
           <Route path="track" element={<TrackOrder />} />
           <Route path="history" element={<OrderHistory />} />
@@ -128,7 +169,12 @@ function App() {
           <Route path="wishlist" element={<Wishlist />} />
           <Route path="products" element={<Products />} />
         </Route>
+
+        {/* Public marketplace routes */}
+        <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/products" element={<Products />} />
+
+        {/* Auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />
