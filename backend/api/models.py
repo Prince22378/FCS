@@ -725,3 +725,14 @@ class ReturnRequest(models.Model):
 
 #     def __str__(self):
 #         return f"Withdrawal #{self.reference_id}"
+
+
+class UserReport(models.Model):
+    reporter = models.ForeignKey(User, related_name="reports_made", on_delete=models.CASCADE)
+    reported_user = models.ForeignKey(User, related_name="reports_received", on_delete=models.CASCADE)
+    reason = models.TextField()
+    custom_reason = models.TextField(blank=True, null=True)  # 👈 Add this line
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.reporter.username} reported {self.reported_user.username}"

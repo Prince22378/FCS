@@ -6,7 +6,7 @@ from django.db import models
 
 from api.models import User, Profile, ChatMessage, FriendRequest, EmailOTP
 
-from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer, SendOTPSerializer, VerifyOTPSerializer
+from api.serializer import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer, ProfileSerializer, MessageSerializer, FriendRequestSerializer, SimpleProfileSerializer, SendOTPSerializer, VerifyOTPSerializer, UserReportSerializer
 
 from rest_framework import serializers 
 from rest_framework.pagination import PageNumberPagination
@@ -37,7 +37,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .models import Listing
+from .models import Listing, UserReport
 from .models import Order
 from .serializer import ListingSerializer, OrderSerializer
 from rest_framework import generics, permissions
@@ -1460,3 +1460,36 @@ class VerifyPaymentOTPView(generics.GenericAPIView):
             del request.session['payment_otp']
             return Response({"success": True})
         return Response({"success": False}, status=400)
+
+
+class ReportedUsersView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        reports = UserReport.objects.all().order_by("-timestamp")
+        serializer = UserReportSerializer(reports, many=True)
+        return Response(serializer.data)
+
+class ReportUserView(APIView):
+    permission_classes = [IsAuthenticated]  # ✅ Secure the endpoint
+
+    def post(self, request, user_id):
+        reason = request.data.get("reason")
+        custom_reason = request.data.get("custom_reason")
+
+        if not reason:
+            return Response({"error": "Reason is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        reported_user = User.objects.filter(id=user_id).first()
+        if not reported_user:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        report = UserReport.objects.create(
+            reported_user=reported_user,
+            reporter=request.user,  # ✅ FIXED: was "reported_by"
+            reason=reason,
+            custom_reason=custom_reason if reason == "Other" else None
+        )
+
+        return Response({"message": "User reported successfully."}, status=status.HTTP_201_CREATED)
+

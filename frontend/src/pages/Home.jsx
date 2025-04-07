@@ -36,6 +36,10 @@ const Homepage = () => {
   const [showReportOverlay, setShowReportOverlay] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [selectedPostId, setSelectedPostId] = useState(null);
+  const [showUserReportModal, setShowUserReportModal] = useState(false);
+  const [reportUserId, setReportUserId] = useState(null);
+  const [selectedReason, setSelectedReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
 
   const reportReasons = [
     "Spam",
@@ -44,39 +48,7 @@ const Homepage = () => {
     "Hate Speech",
     "Other",
   ];
-  // useEffect(() => {
-  //   const fetchUserProfile = async () => {
-  //     try {
-  //       const token = localStorage.getItem(ACCESS_TOKEN);
-  //       if (!token) return navigate("/login");
 
-  //       const decodedToken = jwtDecode(token);
-  //       const userId = decodedToken.user_id;
-
-  //       const response = await api.get(`/api/profile/${userId}/`);
-  //       setProfile(response.data);
-
-  //       // Fetch friend requests after getting profile
-  //       fetchFriendRequests();
-
-  //       setLoading(false);
-  //     } catch (error) {
-  //       console.error("Error fetching user profile", error);
-  //       navigate("/login");
-  //     }
-  //   };
-
-  //   // const fetchFriendRequests = async () => {
-  //   //   try {
-  //   //     const response = await api.get("/api/friend-requests/");
-  //   //     setFriendRequests(response.data); // Assuming response.data is a list of usernames or user objects
-  //   //   } catch (error) {
-  //   //     console.error("Error fetching friend requests", error);
-  //   //   }
-  //   // };
-
-  //   fetchUserProfile();
-  // }, [navigate]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -322,6 +294,34 @@ const Homepage = () => {
     setShowReportOverlay(true);
   };
 
+  
+  const handleReportUser = async () => {
+    if (!selectedReason) {
+      alert("Please select a reason");
+      return;
+    }
+  
+    try {
+      await api.post(`/api/report-user/${reportUserId}/`, {
+        reason: finalReason,
+        custom_reason: selectedReason === "Other" ? customReason : null,
+      });
+      
+  
+      alert("User reported successfully!");
+      setShowUserReportModal(false);
+      setSelectedReason("");
+      setCustomReason("");
+      setReportUserId(null);
+    } catch (error) {
+      console.error("Failed to report user", error);
+      alert("Failed to report user.");
+    }
+  };
+  
+  
+  
+  
   const handleCloseReportOverlay = () => {
     setShowReportOverlay(false);
     setReportReason(""); // Reset the reason
@@ -568,8 +568,6 @@ const Homepage = () => {
                     Load more comments
                   </button>
                 )}
-
-
                 {/* Add Comment Input */}
                 <div className="add-comment">
                   <input
@@ -586,44 +584,6 @@ const Homepage = () => {
             </div>
           );
         })}
-        {/* Post 1 */}
-        {/*div className="post-box">
-          <div className="post-header">  // const [posts, setPosts] = useState([]);
-            <img
-              src="https://via.placeholder.com/40"
-              alt="User Profile"
-              className="post-profile-pic"
-            />
-            <span className="post-username">user_A1</span>
-          </div>
-
-          <img
-            src="https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-            alt="Post 1"
-            className="post-image"
-          />
-
-          <div className="caption">This is a caption for post 1</div>
-        </div> */}
-
-        {/* Post 2 */}
-        {/*<div className="post-box">
-          <div className="post-header">
-            <img
-              src="https://via.placeholder.com/40"
-              alt="User Profile"
-              className="post-profile-pic"
-            />
-            <span className="post-username">user_B2</span>
-          </div>
-
-          <img
-            src="https://images.pexels.com/photos/206359/pexels-photo-206359.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-            alt="Post 2"
-            className="post-image"
-          />
-          <div className="caption">This is the caption for post 2</div>
-        </div> */}
       </div>
 
       {/* Right Sidebar */}
@@ -700,13 +660,27 @@ const Homepage = () => {
             <p>{selectedUserProfile.bio || "No bio available"}</p>
 
             {selectedUserProfile && selectedUserProfile.user.id !== profile?.id && (
-              <button
-                className="send-request-button"
-                onClick={() => handleSendFriendRequest(selectedUserProfile.user.id)}
-              >
-                Send Friend Request
-              </button>
+              <>
+                <button
+                  className="send-request-button"
+                  onClick={() => handleSendFriendRequest(selectedUserProfile.user.id)}
+                >
+                  Send Friend Request
+                </button>
+
+                <button
+                  className="send-request-button"
+                  style={{ backgroundColor: "#dc3545", marginTop: "10px" }}
+                  onClick={() => {
+                    setReportUserId(selectedUserProfile.user.id);
+                    setShowUserReportModal(true);
+                  }}
+                >
+                  🚩 Report User
+                </button>
+              </>
             )}
+
           </div>
         </div>
       )}
@@ -752,6 +726,73 @@ const Homepage = () => {
             <div className="report-actions">
               <button onClick={handleReportSubmit}>Submit Report</button>
               <button onClick={handleCloseReportOverlay}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUserReportModal && (
+        <div className="overlay-backdrop">
+          <div className="report-overlay">
+            <h3>Report User</h3>
+            <label>Select a reason:</label>
+            <select
+              value={selectedReason}
+              onChange={(e) => setSelectedReason(e.target.value)}
+            >
+              <option value="">-- Select a reason --</option>
+              <option value="Spam">Spam</option>
+              <option value="Abusive Content">Abusive Content</option>
+              <option value="Inappropriate Profile">Inappropriate Profile</option>
+              <option value="Harassment">Harassment</option>
+              <option value="Other">Other</option>
+            </select>
+
+            {selectedReason === "Other" && (
+              <textarea
+                placeholder="Enter custom reason..."
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+              />
+            )}
+
+            <div className="report-actions">
+              <button
+                onClick={async () => {
+                  const finalReason =
+                    selectedReason === "Other" ? customReason.trim() : selectedReason;
+
+                  if (!finalReason) return alert("Please provide a reason.");
+
+                  try {
+                    await api.post(`/api/report-user/${reportUserId}/`, {
+                      reason: finalReason,
+                      custom_reason: selectedReason === "Other" ? customReason : null,
+                    });
+                    
+                    alert("User reported successfully.");
+                    setShowUserReportModal(false);
+                    setSelectedReason("");
+                    setCustomReason("");
+                    setReportUserId(null);
+                  } catch (err) {
+                    console.error("Report failed", err);
+                    alert("Something went wrong.");
+                  }
+                }}
+              >
+                Submit
+              </button>
+              <button
+                onClick={() => {
+                  setShowUserReportModal(false);
+                  setSelectedReason("");
+                  setCustomReason("");
+                  setReportUserId(null);
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

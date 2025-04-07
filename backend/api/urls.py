@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView , GroupDetailView
+from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView , GroupDetailView, ReportUserView, ReportedUsersView
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -162,6 +162,10 @@ urlpatterns = [
     path('addresses/', AddressView.as_view(), name='address-list'),
     path('send-payment-otp/', SendPaymentOTPView.as_view(), name='send-payment-otp'),
     path('verify-payment-otp/', VerifyPaymentOTPView.as_view(), name='verify-payment-otp'),
+
+
+    path("reported-users/", views.ReportedUsersView.as_view(), name="reported_users"),
+    path("report-user/<int:user_id>/", ReportUserView.as_view()),
 ]
 
 
