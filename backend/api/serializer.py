@@ -294,6 +294,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
     class Meta:
         model = Group
         fields = ['id', 'name', 'bio', 'image', 'members', 'created_by', 'created_at']
@@ -306,7 +307,11 @@ class GroupSerializer(serializers.ModelSerializer):
         )
         group.members.add(validated_data['created_by'])  # The creator is automatically added
         return group
-
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(f"/api{obj.image.url}")
+        return None
 
 # serializers.py
 class GroupMessageSerializer(serializers.ModelSerializer):

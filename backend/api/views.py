@@ -598,7 +598,8 @@ class CreateGroupView(APIView):
             created_by=request.user
         )
         group.members.set(members)
-        return Response(GroupSerializer(group).data, status=201)
+        return Response(GroupSerializer(group, context={'request': request}).data, status=201)
+
 
 
 class GroupListView(ListAPIView):
@@ -607,6 +608,8 @@ class GroupListView(ListAPIView):
 
     def get_queryset(self):
         return Group.objects.filter(members=self.request.user)
+    def get_serializer_context(self):
+        return {'request': self.request} 
 
 class GroupDetailView(RetrieveAPIView):
     queryset = Group.objects.all()
