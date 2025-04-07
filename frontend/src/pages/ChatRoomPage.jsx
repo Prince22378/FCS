@@ -258,63 +258,71 @@ const ChatroomPage = () => {
         </div>
 
 
-        <div className="sidebar-section">
-          <h3>Friends</h3>
-          {friends.map((friend) => (
-            <div
-              key={friend.id}
-              className={`chat-friend ${selectedFriend?.id === friend.id ? "active" : ""}`}
-              onClick={() => {
-                setSelectedFriend(friend);
-                setSelectedGroup(null);
-              }}
-            >
-              <img
-                className="chat-avatar"
-                src={
-                  friend.user?.id && friendImages[friend.user.id]
-                    ? `${api.defaults.baseURL}/api${friendImages[friend.user.id]}`
-                    : "/default-avatar.png"
-                }
-                alt={friend.full_name}
-              />
-              <span>{friend.full_name}</span>
-            </div>
-          ))}
+        <div className="sidebar-section friends-section">
+          <div className="friends-header">
+            <h3>Friends</h3>
+            {/* (Optional) add a button here if you want */}
+          </div>
+          <div className="friends-list">
+            {friends.map((friend) => (
+              <div
+                key={friend.id}
+                className={`chat-friend ${selectedFriend?.id === friend.id ? "active" : ""}`}
+                onClick={() => {
+                  setSelectedFriend(friend);
+                  setSelectedGroup(null);
+                }}
+              >
+                <img
+                  className="chat-avatar"
+                  src={
+                    friend.user?.id && friendImages[friend.user.id]
+                      ? `${api.defaults.baseURL}/api${friendImages[friend.user.id]}`
+                      : "/default-avatar.png"
+                  }
+                  alt={friend.full_name}
+                />
+                <span>{friend.full_name}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="sidebar-section">
-          <h3>Groups</h3>
-          {/* <button onClick={() => setShowGroupOverlay(true)}>Create Group</button> */}
-          
-          <button
-            className="create-group-btn"
-            onClick={() => setShowGroupOverlay(true)}
-          >
-            Create Group
-          </button>
-
-          {groups.map((group) => (
-            <div
-              key={group.id}
-              className={`chat-friend ${selectedGroup?.id === group.id ? "active" : ""}`}
-              onClick={() => handleGroupSelect(group)}
+        <div className="sidebar-section groups-section">
+          <div className="groups-header">
+            <h3>Groups</h3>
+            {/* <button onClick={() => setShowGroupOverlay(true)}>Create Group</button> */}
+            
+            <button
+              className="create-group-btn"
+              onClick={() => setShowGroupOverlay(true)}
             >
-              {/* {console.log("Group Image Path:", group.image)}   */}
-              <img
-                className="chat-avatar"
-                src={
-                  group.image
-                    ? group.image.startsWith("/media")
-                      ? `${api.defaults.baseURL}/api${group.image}`  // ✅ add /api only once
-                      : group.image  // already has full URL
-                    : `${api.defaults.baseURL}/api/media/group_images/default.png`
-                }
-                alt={group.name}
-              />
-              <span>{group.name}</span>
-            </div>
-          ))}
+              Create Group
+            </button>
+          </div>
+          <div className="groups-list">
+            {groups.map((group) => (
+              <div
+                key={group.id}
+                className={`chat-friend ${selectedGroup?.id === group.id ? "active" : ""}`}
+                onClick={() => handleGroupSelect(group)}
+              >
+                {/* {console.log("Group Image Path:", group.image)}   */}
+                <img
+                  className="chat-avatar"
+                  src={
+                    group.image
+                      ? group.image.startsWith("/media")
+                        ? `${api.defaults.baseURL}/api${group.image}`  // ✅ add /api only once
+                        : group.image  // already has full URL
+                      : `${api.defaults.baseURL}/api/media/group_images/default.png`
+                  }
+                  alt={group.name}
+                />
+                <span>{group.name}</span>
+              </div>
+            ))}
+          </div>
 
         </div>
       </div>

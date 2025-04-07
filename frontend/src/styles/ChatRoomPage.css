@@ -1,3 +1,9 @@
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+    
    .chatroom-container {
     display: flex;
     height: 100vh;
@@ -172,7 +178,7 @@
     color: #777;
     margin: 5px;
   }
-  
+/*   
   @media screen and (max-width: 768px) {
     .chatroom-container {
       flex-direction: column;
@@ -186,7 +192,7 @@
     .chat-window {
       width: 100%;
     }
-  }
+  } */
   
   .typing-indicator {
     font-style: italic;
@@ -391,10 +397,10 @@
   width: 400px;
 }
 
-.friends-list {
+/* .friends-list {
   max-height: 200px;
   overflow-y: auto;
-}
+} */
 
 .friend-item {
   display: flex;
@@ -799,7 +805,7 @@
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s ease;
-  margin-bottom: 12px;
+  margin-bottom: 1px;
 }
 
 .create-group-btn:hover {
@@ -1158,4 +1164,108 @@
   width: 24px;
   height: 24px;
   cursor: pointer;
+}
+
+
+/* Ensure the sidebar takes full height */
+.chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* NOT just 100% */
+  width: 300px;
+  background-color: #ffffff;
+  border-right: 1px solid #ddd;
+}
+
+.friends-section {
+  flex: 1; /* Let it take as much space as it can */
+}
+
+.groups-section {
+  flex: 1; /* Group takes equal space, or adjust if needed */
+}
+/* Each section occupies 50% of the sidebar */
+.sidebar-section {
+  flex: 1; /* instead of height: 50% */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header is fixed-height (doesn't shrink away) */
+.friends-header {
+  display: flex;
+  padding: 6px 5px;           /* Add top/bottom space */
+  margin-bottom: 1px;        /* Space below header */
+  font-weight: bold;
+  font-size: 16px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+.groups-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  /* Reduce padding and bottom margin */
+  padding: 12px 6px; 
+  margin-bottom: 6px; /* was 8px, lower or remove completely if needed */
+  
+  background-color: #fafafa;
+  border-radius: 1px;
+}
+
+/* Remove default top/bottom margin from the h3 element */
+.groups-header h3 {
+  margin: 0;
+}
+
+
+
+/* List grows to fill leftover space and can scroll */
+.friends-list {
+  max-height: 350px;   /* enough for ~7 items */
+  overflow-y: auto;
+}
+/* .friends-list::-webkit-scrollbar {
+  width: 6px;
+} */
+
+.groups-list {
+  flex: 1;             /* fill remaining vertical space in the section */
+  overflow-y: auto;    /* scroll only the list */
+}
+.friends-list,
+.groups-list {
+  flex: 1;
+  overflow-y: auto;
+  /* Adding a subtle gradient from white to a light gray */
+  background: linear-gradient(180deg, #ffffff, #f7f7f7);
+  padding: 10px;
+  border-radius: 4px;
+  /* Inset shadow for depth */
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.friends-list,
+.groups-list {
+  flex: 1;
+  overflow-y: auto;
+}
+/* .friends-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+  border-bottom: 1px solid #eee;
+} */
+
+/* .friend-list{
+  overflow-y: auto;
+  margin-top: 8px;
+} */
+
+
+.sidebar-section:not(:last-child) {
+  margin-bottom: 16px;
 }
