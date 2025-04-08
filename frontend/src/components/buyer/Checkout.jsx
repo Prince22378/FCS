@@ -32,7 +32,7 @@ const Checkout = () => {
 
         try {
             setLoading(true);
-            const response = await axios.post('http://localhost:8000/api/process-payment/', {
+            const response = await axios.post('https://192.168.2.245/api/process-payment/', {
                 upiId,
                 amount: totalAmount,
                 address,
