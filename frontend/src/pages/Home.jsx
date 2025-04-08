@@ -181,7 +181,6 @@ const Homepage = () => {
   const fetchPosts = async () => {
     try {
       const response = await api.get("/api/posts/");
-      // console.log("Posts response:", response.data);
       setPosts(response.data);
     } catch (err) {
       console.error("Error fetching posts", err);
@@ -460,7 +459,6 @@ const Homepage = () => {
         </div>
         <div className="feed-container">
           {posts.map((post) => {
-            // console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
             return (
               <div className="post-box" key={post.id}>
                 <div className="post-header">

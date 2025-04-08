@@ -25,22 +25,17 @@ const ec = new EC("p256"); // P-256 (same as "prime256v1")
 
 async function generatePublicKey(privateKeyBuffer) {
   try {
-    // console.log("Private Key Buffer:", privateKeyBuffer);
 
     // Convert ArrayBuffer to hex string
     const privateKeyHex = Array.from(new Uint8Array(privateKeyBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    // console.log("Private Key Hex:", privateKeyHex);
-
     // Generate key pair from private key
     const key = ec.keyFromPrivate(privateKeyHex, "hex");
 
     // Get public key in hex format
     const publicKeyHex = key.getPublic("hex");
-
-    // console.log("Public Key Hex:", publicKeyHex);
 
     return { publicKey: publicKeyHex };
   } catch (error) {
@@ -132,9 +127,7 @@ function Register() {
       const privateKeyBuffer = await derivePrivateKey(password);
 
       // Generate public key
-      // console.log(privateKeyBuffer);
       const { publicKey } = await generatePublicKey(privateKeyBuffer);
-      // console.log(publicKey);
       await api.post("/api/register/", {
         email,
         username,

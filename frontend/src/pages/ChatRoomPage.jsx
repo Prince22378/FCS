@@ -296,7 +296,6 @@ const ChatroomPage = () => {
   
 
   const handleGroupSelect = (group) => {
-    console.log("Selected Group", group); 
     setSelectedGroup(group);
     setSelectedFriend(null); // clear private chat
   };
@@ -398,7 +397,6 @@ const ChatroomPage = () => {
                 className={`chat-friend ${selectedGroup?.id === group.id ? "active" : ""}`}
                 onClick={() => handleGroupSelect(group)}
               >
-                {/* {console.log("Group Image Path:", group.image)}   */}
                 <img
                   className="chat-avatar"
                   src={
@@ -438,7 +436,6 @@ const ChatroomPage = () => {
           )}
           {selectedGroup && (
             <div className="chat-title">
-              {/* {console.log("Selected Group Image:", selectedGroup.image)}  */}
               <img
                 className="chat-header-avatar"
                 // src={selectedGroup.image ? `${api.defaults.baseURL}/api${selectedGroup.image}` : "/default.png"}
