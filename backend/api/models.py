@@ -733,6 +733,12 @@ class UserReport(models.Model):
     reason = models.TextField()
     custom_reason = models.TextField(blank=True, null=True)  # 👈 Add this line
     timestamp = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("resolved", "Resolved"),
+        ("deleted", "Deleted"),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
 
     def __str__(self):
         return f"{self.reporter.username} reported {self.reported_user.username}"

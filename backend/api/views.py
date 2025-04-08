@@ -1499,8 +1499,9 @@ class ResolveUserReportsView(APIView):
     permission_classes = [IsAdminUser]
 
     def post(self, request, user_id):
-        UserReport.objects.filter(reported_user_id=user_id).delete()
-        return Response({"message": "Reports resolved."}, status=status.HTTP_200_OK)
+        UserReport.objects.filter(reported_user_id=user_id).update(status="resolved")
+        return Response({"message": "Reports marked as resolved."})
+
 
 
 class DeleteUserAndDataView(APIView):
@@ -1510,12 +1511,23 @@ class DeleteUserAndDataView(APIView):
         try:
             user = User.objects.get(id=user_id)
 
-            # Delete related objects if needed
+            # Mark reports as deleted
+            UserReport.objects.filter(reported_user=user).update(status="deleted")
+
+            # Delete associated data
             Post.objects.filter(user=user).delete()
             Profile.objects.filter(user=user).delete()
-            UserReport.objects.filter(reported_user=user).delete()
             user.delete()
 
-            return Response({"message": "User and associated data deleted."}, status=status.HTTP_200_OK)
+            return Response({"message": "User and data deleted."})
         except User.DoesNotExist:
-            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found."}, status=404)
+
+class UserReportLogsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        from .serializer import UserReportSerializer
+        all_reports = UserReport.objects.all().order_by("-timestamp")
+        serializer = UserReportSerializer(all_reports, many=True)
+        return Response(serializer.data)

@@ -6,6 +6,9 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [reportedUsers, setReportedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userReportsActive, setUserReportsActive] = useState([]);
+  const [userReportsResolved, setUserReportsResolved] = useState([]);
+  const [userReportsDeleted, setUserReportsDeleted] = useState([]);
 
   const [selectedReportedProfile, setSelectedReportedProfile] = useState(null);
   const [showReportedProfileOverlay, setShowReportedProfileOverlay] = useState(false);
@@ -13,7 +16,21 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchReportedUsers();
+    fetchUserReports();
   }, []);
+
+  const fetchUserReports = () => {
+    api.get("/api/admin/user-report-logs/")
+      .then((res) => {
+        const data = res.data;
+        setUserReportsActive(data.filter(r => r.status === "pending"));
+        setUserReportsResolved(data.filter(r => r.status === "resolved"));
+        setUserReportsDeleted(data.filter(r => r.status === "deleted"));
+      })
+      .catch((err) => {
+        console.error("Error fetching user reports", err);
+      });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -51,6 +68,7 @@ const UserManagement = () => {
       alert("Report resolved");
       setShowReportedProfileOverlay(false);
       fetchReportedUsers();
+      fetchUserReports();
     } catch (err) {
       alert("Failed to resolve report");
     }
@@ -63,6 +81,7 @@ const UserManagement = () => {
       alert("User deleted successfully.");
       setShowReportedProfileOverlay(false);
       fetchReportedUsers();
+      fetchUserReports();
     } catch (err) {
       alert("Failed to delete user.");
     }
@@ -124,6 +143,41 @@ const UserManagement = () => {
                   ))
                 ) : (
                   <p>No reported users found.</p>
+                )}
+              </div>
+              {/* ✅ Resolved User Reports Section */}
+              <div className="section">
+                <h3>✅ Resolved User Reports</h3>
+                {userReportsResolved.length > 0 ? (
+                  userReportsResolved.map((report) => (
+                    <div key={report.id} className="user-card">
+                      <strong>{report.reported_username}</strong> was reported by {report.reporter_username}
+                      <br />
+                      <em>Reason: {report.reason}</em>
+                      <br />
+                      <small>{new Date(report.timestamp).toLocaleString()}</small>
+                    </div>
+                  ))
+                ) : (
+                  <p>No resolved reports found.</p>
+                )}
+              </div>
+
+              {/* ❌ Deleted Users Reports Section */}
+              <div className="section">
+                <h3>🗑 Deleted Users</h3>
+                {userReportsDeleted.length > 0 ? (
+                  userReportsDeleted.map((report) => (
+                    <div key={report.id} className="user-card">
+                      <strong>{report.reported_username}</strong> was deleted by admin
+                      <br />
+                      <em>Reported by: {report.reporter_username}</em>
+                      <br />
+                      <small>{new Date(report.timestamp).toLocaleString()}</small>
+                    </div>
+                  ))
+                ) : (
+                  <p>No deleted users found.</p>
                 )}
               </div>
             </>
