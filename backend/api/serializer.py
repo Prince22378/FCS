@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import Listing, Order, Withdrawal, UserReport, CartItem, SellerProfile
 
-
+from .models import Transaction, Wallet
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -382,16 +382,22 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title', read_only=True)
     price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
     image = serializers.SerializerMethodField()
+    seller_username = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'product_name', 'price', 'image', 'quantity']
+        fields = ['id', 'product', 'product_name', 'price', 'image', 'quantity', 'seller_username']
 
     def get_image(self, obj):
         request = self.context.get('request')
         if obj.product.thumbnail:
             return request.build_absolute_uri(obj.product.thumbnail.url)
-        return None
+        return request.build_absolute_uri('/static/default_listing.jpg')  # fallback if no image
+
+    def get_seller_username(self, obj):
+        return obj.product.seller.username
+
+
 
 
 
@@ -507,19 +513,15 @@ class ReturnRequestSerializer(serializers.ModelSerializer):
             'completion_date', 'order_details'
         ]
 
+class WalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wallet
+        fields = ['user', 'balance']
+
 class TransactionSerializer(serializers.ModelSerializer):
-    order = serializers.PrimaryKeyRelatedField(read_only=True)
-    invoice = serializers.PrimaryKeyRelatedField(read_only=True)
-    payment_method = PaymentMethodSerializer(read_only=True)
-    
     class Meta:
         model = Transaction
-        fields = [
-            'id', 'transaction_type', 'amount', 'description',
-            'status', 'payment_method', 'order', 'invoice',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = fields
+        fields = '__all__'
 
 class InvoiceSerializer(serializers.ModelSerializer):
     order = OrderSerializer(read_only=True)
@@ -540,6 +542,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'image']
+
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer()

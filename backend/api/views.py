@@ -27,6 +27,9 @@ from django.shortcuts import get_object_or_404
 
 from django.http import FileResponse
 
+from .models import Wallet, Transaction
+from .serializer import WalletSerializer, TransactionSerializer
+
 
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from api.models import Comment, Report, Group, GroupMessage, GroupMessageKey
@@ -962,6 +965,113 @@ class WithdrawalAPI(APIView):
         
 
 
+from .models import Transaction
+from django.db import transaction as db_transaction
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def process_payment(request):
+    user = request.user
+    upi_id = request.data.get('upiId')
+
+    if not upi_id:
+        return Response({'error': 'Missing UPI ID.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        buyer_wallet = Wallet.objects.get(user=user)
+        cart_items = CartItem.objects.select_related('product', 'product__seller').filter(user=user)
+
+        if not cart_items.exists():
+            return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_amount = 0
+        seller_totals = {}
+        seller_profiles = {}
+
+        for item in cart_items:
+            seller = item.product.seller
+            amount = item.product.price * item.quantity
+
+            seller_totals.setdefault(seller, 0)
+            seller_totals[seller] += amount
+            total_amount += amount
+
+        if buyer_wallet.balance < total_amount:
+            return Response({'error': 'Insufficient balance in buyer wallet'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+        with db_transaction.atomic():
+            # Deduct once
+            buyer_wallet.balance -= total_amount
+            buyer_wallet.save()
+
+            for seller, amount in seller_totals.items():
+                seller_wallet, _ = Wallet.objects.get_or_create(user=seller)
+                seller_profile = seller.seller_profile
+
+                seller_wallet.balance += amount
+                seller_wallet.save()
+
+                seller_profile.total_earnings += amount
+                seller_profile.save()
+
+                Transaction.objects.create(
+                    sender=user,
+                    receiver=seller,
+                    upi_id=upi_id,
+                    amount=amount,
+                    success=True
+                )
+
+                seller_profiles[seller.username] = SellerProfileSerializer(seller_profile).data
+
+            cart_items.delete()
+
+        return Response({
+            'success': True,
+            'message': 'Payment processed successfully to all sellers.',
+            'total_amount': total_amount,
+            'sellers_paid': [
+                {
+                    'username': seller.username,
+                    'email': seller.email,
+                    'profile': seller_profiles[seller.username]
+                }
+                for seller in seller_totals.keys()
+            ]
+        })
+
+    except Wallet.DoesNotExist:
+        return Response({'error': 'Buyer wallet not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+class ProcessPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        upi_id = request.data.get('upiId')
+        amount = request.data.get('amount')
+        address = request.data.get('address')
+        seller_username = request.data.get('sellerUsername')
+
+        if upi_id and amount and address:
+            # Save order or do any payment processing here...
+            return Response({'success': True, 'message': 'Payment processed successfully.'}, status=status.HTTP_200_OK)
+
+        return Response({'success': False, 'error': 'Invalid data provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_wallet_balance(request):
+    try:
+        wallet = Wallet.objects.get(user=request.user)
+        serializer = WalletSerializer(wallet)
+        return Response(serializer.data)
+    except Wallet.DoesNotExist:
+        return Response({'error': 'Wallet not found'}, status=404)
 
 # Buyer
 

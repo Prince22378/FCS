@@ -80,9 +80,14 @@ const Cart = () => {
               <p>Shipping: <span>₹{shipping}</span></p>
               <p className="total">Total: <span>₹{total}</span></p>
             </div>
-            <button onClick={() => navigate('/buyer/checkout', { state: { totalAmount: total } })}>
-  Go to Checkout
-</button>
+            <button onClick={() => navigate('/buyer/checkout', {
+              state: {
+                totalAmount: total,
+                sellerUsername: cartItems[0]?.seller_username,
+              }
+            })}>
+              Go to Checkout
+            </button>
 
           </div>
         </>

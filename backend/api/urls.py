@@ -15,6 +15,10 @@ from .views import MarketplaceListAPI
 from .views import BuyerMarketplaceAPI
 from .views import CreateListingAPI
 
+from .views import process_payment, get_wallet_balance
+
+
+
 from .views import (
     CartView,
     CheckoutView,
@@ -125,6 +129,8 @@ path('buyer/products/<int:pk>/', views.PublicListingDetailAPI.as_view(), name='b
     path('addresses/<int:pk>/set-default/', SetDefaultAddressView.as_view(), name='set-default-address'),
     
     # Payment Methods
+    path('process-payment/', process_payment, name='process-payment'),
+    path('my-wallet/', get_wallet_balance, name='get-wallet'),
     path('payment-methods/', PaymentMethodListCreateView.as_view(), name='payment-method-list'),
     path('payment-methods/<int:pk>/', PaymentMethodDetailView.as_view(), name='payment-method-detail'),
     path('payment-methods/<int:pk>/set-default/', SetDefaultPaymentMethodView.as_view(), name='set-default-payment-method'),

@@ -291,6 +291,25 @@ class SellerProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Seller Profile"
+    
+
+class Wallet(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
+    def __str__(self):
+        return f"{self.user.username}'s Wallet - ₹{self.balance}"
+
+class Transaction(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_transactions')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_transactions')
+    upi_id = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    success = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.sender.username} → {self.receiver.username}: ₹{self.amount} ({'Success' if self.success else 'Failed'})"
 
 
 # ========================
@@ -385,8 +404,10 @@ class OrderBuyer(models.Model):
 
     def __str__(self):
         return f"Order #{self.order_number}"
-
+    
+    
 class Product(models.Model):
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')  # 👈 Add this
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
@@ -404,28 +425,7 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity}x {self.listing.title} @ ₹{self.price_at_purchase}"
 
-class Transaction(models.Model):
-    STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('COMPLETED', 'Completed'),
-        ('FAILED', 'Failed'),
-        ('REFUNDED', 'Refunded'),
-    ]
 
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='transactions')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT)
-    transaction_id = models.CharField(max_length=100, unique=True)
-    gateway_response = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"TXN-{self.transaction_id}"
 
 class Invoice(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='invoice')

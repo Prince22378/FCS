@@ -10,7 +10,6 @@ const BuyerMarketplace = ({ cartItems = [], updateQuantity = () => {}, removeIte
     { path: '/buyer/products', label: 'Browse Products', icon: '🛍️' },
     { path: '/buyer/orders', label: 'My Orders', icon: '📦' },
     { path: '/buyer/cart', label: `My Cart ${cartItems.length > 0 ? `(${cartItems.length})` : ''}`, icon: '🛒' },
-    { path: '/buyer/profile', label: 'My Profile', icon: '👤' },
   ];
 
   return (
