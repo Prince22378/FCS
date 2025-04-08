@@ -458,132 +458,134 @@ const Homepage = () => {
             readOnly
           />
         </div>
-        {posts.map((post) => {
-          // console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
-          return (
-            <div className="post-box" key={post.id}>
-              <div className="post-header">
-                {post.profile_image && (
-                  <img
-                    src={`${import.meta.env.VITE_API_URL}/api${post.profile_image}`}
-                    alt="Profile"
-                    className="post-profile-pic"
-                  />
-                )}
-                <span
-                  className="post-username"
-                  style={{ cursor: "pointer", color: "#007bff" }}
-                  onClick={() => handleUsernameClick(post.user)}
-                >
-                  {post.username}
-                </span>
-                {/* ⋮ Menu Button */}
-                <div className="post-menu-container">
-                  <button
-                    className="post-menu-btn"
-                    onClick={() =>
-                      setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)
-                    }
-                  >
-                    ⋮
-                  </button>
-
-                  {openMenuPostId === post.id && (
-                    <div className="post-menu-dropdown">
-                      {/* Show Delete only if user is author */}
-                      {profile?.id === post.user && (
-                        <button
-                          className="post-menu-item delete"
-                          onClick={() => handleDeletePost(post.id)}
-                        >
-                          🗑 Delete
-                        </button>
-                      )}
-                      <button
-                        className="post-menu-item report"
-                        onClick={() => handleReportPost(post.id)}
-                      >
-                        🚩 Report
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              {post.image && (
-                <img
-                  src={`${import.meta.env.VITE_API_URL}/api${post.image}`}
-                  alt="Post"
-                  className="post-image"
-                />
-              )}
-
-              <div className="caption">{post.caption}</div>
-              <div className="timestamp">
-                {new Date(post.created_at).toLocaleString()}
-              </div>
-              {/* ❤️ Like Button */}
-              {/* <button className="like-btn" onClick={() => handleLike(post.id)}>
-              👍 Like ({post.likes_count})
-            </button> */}
-              <button
-                className={`like-btn ${post.has_liked ? "liked" : ""}`}
-                onClick={() => handleLike(post.id)}
-              >
-                👍 Like ({post.likes_count})
-              </button>
-
-              {/* 💬 Comments Section */}
-              <div className="comments">
-                <h4>Comments</h4>
-                {(showAllComments[post.id]
-                  ? post.comments
-                  : post.comments.slice(0, 3)
-                ).map((comment) => (
-                  <div key={comment.id} className="comment">
+        <div className="feed-container">
+          {posts.map((post) => {
+            // console.log("IMAGE URL:", `${import.meta.env.VITE_API_URL}/api${post.image}`);
+            return (
+              <div className="post-box" key={post.id}>
+                <div className="post-header">
+                  {post.profile_image && (
                     <img
-                      src={`${import.meta.env.VITE_API_URL}/api${comment.profile_image}`}
-                      alt="Commenter"
-                      className="comment-profile-pic"
+                      src={`${import.meta.env.VITE_API_URL}/api${post.profile_image}`}
+                      alt="Profile"
+                      className="post-profile-pic"
                     />
-                    <div className="comment-body">
-                      <strong>{comment.username}</strong>
-                      <p>{comment.text}</p>
-                      <small className="comment-time">
-                        {new Date(comment.created_at).toLocaleString()}
-                      </small>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Show "Load More" if there are more than 3 comments and not all are shown */}
-                {post.comments.length > 3 && !showAllComments[post.id] && (
-                  <button
-                    className="load-more-comments"
-                    onClick={() =>
-                      setShowAllComments({ ...showAllComments, [post.id]: true })
-                    }
+                  )}
+                  <span
+                    className="post-username"
+                    style={{ cursor: "pointer", color: "#007bff" }}
+                    onClick={() => handleUsernameClick(post.user)}
                   >
-                    Load more comments
-                  </button>
-                )}
-                {/* Add Comment Input */}
-                <div className="add-comment">
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    value={newComments[post.id] || ""}
-                    onChange={(e) =>
-                      setNewComments({ ...newComments, [post.id]: e.target.value })
-                    }
+                    {post.username}
+                  </span>
+                  {/* ⋮ Menu Button */}
+                  <div className="post-menu-container">
+                    <button
+                      className="post-menu-btn"
+                      onClick={() =>
+                        setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)
+                      }
+                    >
+                      ⋮
+                    </button>
+
+                    {openMenuPostId === post.id && (
+                      <div className="post-menu-dropdown">
+                        {/* Show Delete only if user is author */}
+                        {profile?.id === post.user && (
+                          <button
+                            className="post-menu-item delete"
+                            onClick={() => handleDeletePost(post.id)}
+                          >
+                            🗑 Delete
+                          </button>
+                        )}
+                        <button
+                          className="post-menu-item report"
+                          onClick={() => handleReportPost(post.id)}
+                        >
+                          🚩 Report
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {post.image && (
+                  <img
+                    src={`${import.meta.env.VITE_API_URL}/api${post.image}`}
+                    alt="Post"
+                    className="post-image"
                   />
-                  <button onClick={() => handleCommentSubmit(post.id)}>Post</button>
+                )}
+
+                <div className="caption">{post.caption}</div>
+                <div className="timestamp">
+                  {new Date(post.created_at).toLocaleString()}
+                </div>
+                {/* ❤️ Like Button */}
+                {/* <button className="like-btn" onClick={() => handleLike(post.id)}>
+                👍 Like ({post.likes_count})
+              </button> */}
+                <button
+                  className={`like-btn ${post.has_liked ? "liked" : ""}`}
+                  onClick={() => handleLike(post.id)}
+                >
+                  👍 Like ({post.likes_count})
+                </button>
+
+                {/* 💬 Comments Section */}
+                <div className="comments">
+                  <h4>Comments</h4>
+                  {(showAllComments[post.id]
+                    ? post.comments
+                    : post.comments.slice(0, 3)
+                  ).map((comment) => (
+                    <div key={comment.id} className="comment">
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}/api${comment.profile_image}`}
+                        alt="Commenter"
+                        className="comment-profile-pic"
+                      />
+                      <div className="comment-body">
+                        <strong>{comment.username}</strong>
+                        <p>{comment.text}</p>
+                        <small className="comment-time">
+                          {new Date(comment.created_at).toLocaleString()}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Show "Load More" if there are more than 3 comments and not all are shown */}
+                  {post.comments.length > 3 && !showAllComments[post.id] && (
+                    <button
+                      className="load-more-comments"
+                      onClick={() =>
+                        setShowAllComments({ ...showAllComments, [post.id]: true })
+                      }
+                    >
+                      Load more comments
+                    </button>
+                  )}
+                  {/* Add Comment Input */}
+                  <div className="add-comment">
+                    <input
+                      type="text"
+                      placeholder="Write a comment..."
+                      value={newComments[post.id] || ""}
+                      onChange={(e) =>
+                        setNewComments({ ...newComments, [post.id]: e.target.value })
+                      }
+                    />
+                    <button onClick={() => handleCommentSubmit(post.id)}>Post</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Right Sidebar */}

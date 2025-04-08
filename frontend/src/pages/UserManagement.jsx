@@ -26,6 +26,7 @@ const UserManagement = () => {
         setUserReportsActive(data.filter(r => r.status === "pending"));
         setUserReportsResolved(data.filter(r => r.status === "resolved"));
         setUserReportsDeleted(data.filter(r => r.status === "deleted"));
+
       })
       .catch((err) => {
         console.error("Error fetching user reports", err);
@@ -125,8 +126,8 @@ const UserManagement = () => {
               {/* 🚩 Reported Users Section */}
               <div className="section">
                 <h3>🚩 Reported Users</h3>
-                {reportedUsers && reportedUsers.length > 0 ? (
-                  reportedUsers.map((report) => (
+                {userReportsActive && userReportsActive.length > 0 ? (
+                  userReportsActive.map((report) => (
                     <div key={report.id} className="user-card reported">
                       <p><strong>Reporter:</strong> {report.reporter_username}</p>
                       <p><strong>Reported:</strong> {report.reported_username}</p>
@@ -164,7 +165,7 @@ const UserManagement = () => {
               </div>
 
               {/* ❌ Deleted Users Reports Section */}
-              <div className="section">
+              {/* <div className="section">
                 <h3>🗑 Deleted Users</h3>
                 {userReportsDeleted.length > 0 ? (
                   userReportsDeleted.map((report) => (
@@ -179,7 +180,7 @@ const UserManagement = () => {
                 ) : (
                   <p>No deleted users found.</p>
                 )}
-              </div>
+              </div> */}
             </>
           )}
         </div>

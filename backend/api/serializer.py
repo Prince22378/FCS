@@ -551,5 +551,6 @@ class UserReportSerializer(serializers.ModelSerializer):
             "id",
             "reporter", "reporter_username",
             "reported_user", "reported_username",
-            "reason", "custom_reason", "timestamp"
+            "reason", "custom_reason", "timestamp",
+            "status"
         ]

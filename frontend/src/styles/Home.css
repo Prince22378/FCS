@@ -19,7 +19,7 @@
   
   /* === Left Sidebar === */
   .left-sidebar {
-    width: 220px;
+    width: 300px;
     background-color: #474747;
     padding: 1rem;
     color: white;
@@ -151,6 +151,15 @@
     color: white;
   }
   
+  body {
+    overflow-y: scroll; /* Keeps layout stable, avoids layout shift */
+    scrollbar-width: none;         /* Firefox */
+    -ms-overflow-style: none;      /* IE 10+ */
+  }
+  
+  body::-webkit-scrollbar {
+    display: none;                 /* Chrome, Safari, Edge */
+  }
   /* === Center content === */
   .main-content {
     flex: 1;
@@ -159,8 +168,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-y: auto;
+    box-sizing: border-box;
+    max-width: 800px;
+    margin: 0 auto;
   }
+  
+
+
+  /* .homepage {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  } */
   
   /* .create-post {
     background: white;
@@ -177,7 +198,7 @@
     border-radius: 4px;
     border: 1px solid #ccc;
   } */
-
+/* 
   .create-post {
     background: white;
     padding: 0.75rem;
@@ -187,6 +208,36 @@
     box-sizing: border-box;
     margin-bottom: 1rem;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  } */
+
+  .create-post {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 600px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .feed-container {
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 600px;
+    padding: 1rem 0;
+  
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .feed-container::-webkit-scrollbar {
+    display: none;
   }
   
   .create-post-input {
@@ -216,7 +267,7 @@
   
   /* === Right Sidebar === */
   .right-sidebar {
-    width: 250px;
+    width: 300px;
     background-color: #d4ecfa;
     padding: 1rem;
   }
@@ -616,3 +667,5 @@
     background-color: #1e90ff;
     color: white;
   }
+
+  
