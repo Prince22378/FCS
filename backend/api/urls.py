@@ -167,7 +167,7 @@ urlpatterns = [
     path("reported-users/", views.ReportedUsersView.as_view(), name="reported_users"),
     path("report-user/<int:user_id>/", ReportUserView.as_view()),
     path("admin/resolve-user/<int:user_id>/", ResolveUserReportsView.as_view(), name="resolve_user_reports"),
-path("admin/delete-user/<int:user_id>/", DeleteUserAndDataView.as_view(), name="delete_user_and_data"),
+    path("admin/delete-user/<int:user_id>/", DeleteUserAndDataView.as_view(), name="delete_user_and_data"),
 ]
 
 

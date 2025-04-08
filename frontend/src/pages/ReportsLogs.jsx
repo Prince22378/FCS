@@ -116,7 +116,7 @@ const ReportsLogs = () => {
                       <div>
                         <strong>Reported Post:</strong>
                         <br />
-                        <em>{report.post.caption}</em>
+                        <em>{report.post ? report.post.caption : "Post deleted or unavailable"}</em>
                         <br />
                         <strong>Reported by:</strong> {report.user.username}
                         <br />
