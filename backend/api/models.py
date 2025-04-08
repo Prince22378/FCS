@@ -495,3 +495,21 @@ class ReturnRequest(models.Model):
 
     def __str__(self):
         return f"Return request for Order #{self.order.order_number}"
+
+
+
+class UserReport(models.Model):
+    reporter = models.ForeignKey(User, related_name="reports_made", on_delete=models.CASCADE)
+    reported_user = models.ForeignKey(User, related_name="reports_received", on_delete=models.CASCADE)
+    reason = models.TextField()
+    custom_reason = models.TextField(blank=True, null=True)  # 👈 Add this line
+    timestamp = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("resolved", "Resolved"),
+        ("deleted", "Deleted"),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+
+    def __str__(self):
+        return f"{self.reporter.username} reported {self.reported_user.username}"

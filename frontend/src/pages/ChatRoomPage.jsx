@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import api from "../api";
 import { ACCESS_TOKEN, PRIVATE_KEY } from "../constants";
 import { ec as EC } from "elliptic"; // Elliptic Curve Crypto
+import CryptoJS from "crypto-js"; 
 import "../styles/ChatRoomPage.css";  
 
 const ec = new EC("p256"); // Using P-256 Curve
@@ -35,6 +36,8 @@ const ChatroomPage = () => {
   const [groupImage, setGroupImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [decryptedMediaURLs, setDecryptedMediaURLs] = useState({});
+
 
 
 
@@ -102,6 +105,32 @@ const ChatroomPage = () => {
   }, [friends]);
 
   useEffect(() => {
+    const decryptAllMedia = async () => {
+      for (const msg of messages) {
+        if (msg.media && !decryptedMediaURLs[msg.id]) {
+          try {
+            const sharedSecret = ec.keyFromPublic(friendPublicKey, "hex")
+              .getPublic()
+              .mul(ec.keyFromPrivate(privateKeyHex, "hex").getPrivate())
+              .encode("hex");
+  
+            const response = await fetch(`${api.defaults.baseURL}/api${msg.media}`);
+            const encryptedBlob = await response.blob();
+            const decryptedBlob = await decryptMediaFile(encryptedBlob, sharedSecret);
+            const url = URL.createObjectURL(decryptedBlob);
+  
+            setDecryptedMediaURLs((prev) => ({ ...prev, [msg.id]: url }));
+          } catch (err) {
+            console.error(`Decryption failed for media in msg ${msg.id}`, err);
+          }
+        }
+      }
+    };
+  
+    decryptAllMedia();
+  }, [messages, friendPublicKey, privateKeyHex]);
+  
+  useEffect(() => {
     if (!selectedFriend) return;
     const fetchPublicKey = async () => {
       try {
@@ -164,25 +193,47 @@ const ChatroomPage = () => {
     return new TextDecoder().decode(decryptedBuffer);
   };
 
+  const encryptMediaFile = async (file, key) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+    const encrypted = CryptoJS.AES.encrypt(wordArray, key).toString();
+    return new Blob([encrypted]);
+  };
+  
+  const decryptMediaFile = async (blob, key) => {
+    const encryptedText = await blob.text();
+    const decrypted = CryptoJS.AES.decrypt(encryptedText, key);
+    const decryptedWords = decrypted.words;
+    const byteArray = new Uint8Array(decryptedWords.length * 4);
+    for (let i = 0; i < decryptedWords.length; i++) {
+      byteArray[i * 4] = (decryptedWords[i] >> 24) & 0xff;
+      byteArray[i * 4 + 1] = (decryptedWords[i] >> 16) & 0xff;
+      byteArray[i * 4 + 2] = (decryptedWords[i] >> 8) & 0xff;
+      byteArray[i * 4 + 3] = decryptedWords[i] & 0xff;
+    }
+    return new Blob([byteArray]);
+  };
+
   const handleSend = async () => {
-    // Only abort if both text and media are missing
     if (!newMessage.trim() && !mediaFile) return;
   
     const formData = new FormData();
     formData.append("sender", currentUserId);
     formData.append("reciever", selectedFriend.user.id);
   
-    // If there's text, encrypt and send it.
-    // Otherwise, if a media file exists, send a zero-width space as the message.
     const messageToSend = newMessage.trim()
       ? encryptMessage(newMessage.trim(), friendPublicKey)
       : encryptMessage("\u200B", friendPublicKey);
-  
     formData.append("message", messageToSend);
   
-    // Always attach media if available.
     if (mediaFile) {
-      formData.append("media", mediaFile);
+      const sharedSecret = ec.keyFromPublic(friendPublicKey, "hex")
+        .getPublic()
+        .mul(ec.keyFromPrivate(privateKeyHex, "hex").getPrivate())
+        .encode("hex");
+  
+      const encryptedBlob = await encryptMediaFile(mediaFile, sharedSecret);
+      formData.append("media", new File([encryptedBlob], mediaFile.name));
     }
   
     try {
@@ -245,7 +296,6 @@ const ChatroomPage = () => {
   
 
   const handleGroupSelect = (group) => {
-    console.log("Selected Group", group); 
     setSelectedGroup(group);
     setSelectedFriend(null); // clear private chat
   };
@@ -347,7 +397,6 @@ const ChatroomPage = () => {
                 className={`chat-friend ${selectedGroup?.id === group.id ? "active" : ""}`}
                 onClick={() => handleGroupSelect(group)}
               >
-                {/* {console.log("Group Image Path:", group.image)}   */}
                 <img
                   className="chat-avatar"
                   src={
@@ -387,7 +436,6 @@ const ChatroomPage = () => {
           )}
           {selectedGroup && (
             <div className="chat-title">
-              {/* {console.log("Selected Group Image:", selectedGroup.image)}  */}
               <img
                 className="chat-header-avatar"
                 // src={selectedGroup.image ? `${api.defaults.baseURL}/api${selectedGroup.image}` : "/default.png"}
@@ -408,13 +456,36 @@ const ChatroomPage = () => {
               return (
                 <div key={i} className={`chat-message ${isMe ? "sent" : "received"}`}>
                   {msg.message && <div>{decryptMessage(msg.message) || "[Encrypted]"}</div>}
-                  {msg.media && (
-                    msg.media.endsWith(".mp4") ? (
-                      <video src={`${api.defaults.baseURL}/api${msg.media}`} controls />
-                    ) : (
-                      <img src={`${api.defaults.baseURL}/api${msg.media}`} alt="media" />
-                    )
-                  )}
+                    {/* {msg.media && !decryptedMediaURLs[msg.id] && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            const sharedSecret = ec.keyFromPublic(friendPublicKey, "hex")
+                              .getPublic()
+                              .mul(ec.keyFromPrivate(privateKeyHex, "hex").getPrivate())
+                              .encode("hex");
+
+                            const response = await fetch(`${api.defaults.baseURL}/api${msg.media}`);
+                            const encryptedBlob = await response.blob();
+                            const decryptedBlob = await decryptMediaFile(encryptedBlob, sharedSecret);
+                            const url = URL.createObjectURL(decryptedBlob);
+                            setDecryptedMediaURLs((prev) => ({ ...prev, [msg.id]: url }));
+                          } catch (err) {
+                            console.error("Decryption failed", err);
+                            alert("Could not decrypt media");
+                          }
+                        }}
+                      >
+                        🔓 View Encrypted Media
+                      </button>
+                    )} */}
+                    {msg.media && decryptedMediaURLs[msg.id] && (
+                      msg.media.endsWith(".mp4") ? (
+                        <video src={decryptedMediaURLs[msg.id]} controls style={{ maxWidth: "300px" }} />
+                      ) : (
+                        <img src={decryptedMediaURLs[msg.id]} alt="decrypted" style={{ maxWidth: "300px" }} />
+                      )
+                    )}
                   <div className="chat-meta">
                     <small>{formatTime(msg.date)}</small>
                   </div>
@@ -457,7 +528,11 @@ const ChatroomPage = () => {
                 <input
                   type="file"
                   accept="image/*,video/*"
-                  onChange={(e) => setMediaFile(e.target.files[0])}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) setMediaFile(file);
+                    e.target.value = null; // ✅ Reset input so same file can be selected again
+                  }}
                 />
                 ⬆️
               </label>
@@ -525,8 +600,6 @@ const ChatroomPage = () => {
                       </div>
                     )}
                   </div>
-
-
               </div>
               <div className="modal-footer">
                 <button className="btn btn-cancel" onClick={() => setShowGroupOverlay(false)}>
@@ -591,9 +664,6 @@ const ChatroomPage = () => {
             </div>
           </div>
         )}
-
-
-
       </div>
     </div>
   );

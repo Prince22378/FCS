@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView , GroupDetailView
+from .views import PostViewSet, LimitedCommentsView, AllCommentsView, ReportPostView, ReportListView, ResolveReport, TakeDownPost, CreateGroupView, GroupListView, GroupChatMessageView , GroupDetailView, ReportUserView, ReportedUsersView, ResolveUserReportsView, DeleteUserAndDataView, UserReportLogsView
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -177,6 +177,14 @@ path('buyer/products/<int:pk>/', views.PublicListingDetailAPI.as_view(), name='b
     path('addresses/', AddressView.as_view(), name='address-list'),
     path('send-payment-otp/', SendPaymentOTPView.as_view(), name='send_payment_otp'),
 path('verify-payment-otp/', VerifyPaymentOTPView.as_view(), name='verify_payment_otp'),
+
+
+    path("reported-users/", views.ReportedUsersView.as_view(), name="reported_users"),
+    path("report-user/<int:user_id>/", ReportUserView.as_view()),
+    path("admin/resolve-user/<int:user_id>/", ResolveUserReportsView.as_view(), name="resolve_user_reports"),
+    path("admin/delete-user/<int:user_id>/", DeleteUserAndDataView.as_view(), name="delete_user_and_data"),
+    path("admin/user-report-logs/", UserReportLogsView.as_view(), name="user_report_logs"),
+
 
 ]
 

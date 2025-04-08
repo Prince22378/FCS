@@ -146,14 +146,14 @@ const FriendPage = () => {
           filteredUsers.map((profile) => (
             <div key={profile.id} className="user-card">
               <img
-                className="user-avatar"
-                src={
-                  profile.user?.id && friendImages[profile.user.id]
-                    ? `${api.defaults.baseURL}/api${friendImages[profile.user.id]}`
-                    : "/default-avatar.png"
-                }
-                alt={profile.full_name}
-              />
+                  className="user-avatar"
+                  src={
+                    profile.image
+                      ? `${api.defaults.baseURL}/api${profile.image}`
+                      : "/default-avatar.png"
+                  }
+                  alt={profile.full_name}
+                />
               <div className="user-details">
                 <span>{profile.full_name}</span>
                 <button

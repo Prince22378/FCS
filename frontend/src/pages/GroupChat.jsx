@@ -11,11 +11,11 @@ const GroupChat = ({ selectedGroup, currentUserId }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [mediaFile, setMediaFile] = useState(null);
+  const [decryptedMediaURLs, setDecryptedMediaURLs] = useState({});
   const isFetchingRef = useRef(false);
   const bottomRef = useRef(null);
   const [showAddMembersOverlay, setShowAddMembersOverlay] = useState(false);
-  const [showCurrentMembersOverlay, setShowCurrentMembersOverlay] =
-    useState(false);
+  const [showCurrentMembersOverlay, setShowCurrentMembersOverlay] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -90,6 +90,71 @@ const GroupChat = ({ selectedGroup, currentUserId }) => {
     return CryptoJS.AES.decrypt(encrypted, shared).toString(CryptoJS.enc.Utf8);
   };
 
+  const encryptMediaFile = async (file, key) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+    const encrypted = CryptoJS.AES.encrypt(wordArray, key).toString();
+    return new Blob([encrypted]);
+  };
+
+  const decryptMediaFile = async (blob, key) => {
+    const encryptedText = await blob.text();
+    const decrypted = CryptoJS.AES.decrypt(encryptedText, key);
+    const decryptedWords = decrypted.words;
+    const byteArray = new Uint8Array(decryptedWords.length * 4);
+    for (let i = 0; i < decryptedWords.length; i++) {
+      byteArray[i * 4] = (decryptedWords[i] >> 24) & 0xff;
+      byteArray[i * 4 + 1] = (decryptedWords[i] >> 16) & 0xff;
+      byteArray[i * 4 + 2] = (decryptedWords[i] >> 8) & 0xff;
+      byteArray[i * 4 + 3] = decryptedWords[i] & 0xff;
+    }
+    return new Blob([byteArray]);
+  };
+  
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedGroup || isFetchingRef.current) return;
+      isFetchingRef.current = true;
+      try {
+        const res = await api.get(`/api/groups/${selectedGroup.id}/messages/`);
+        setMessages(res.data);
+      } catch (err) {
+        console.error("Error fetching group messages:", err);
+      } finally {
+        isFetchingRef.current = false;
+      }
+    };
+
+    const interval = setInterval(fetchMessages, 2000);
+    fetchMessages();
+    return () => clearInterval(interval);
+  }, [selectedGroup]);
+
+
+  useEffect(() => {
+    const decryptAllMedia = async () => {
+      for (const msg of messages) {
+        if (msg.media && msg.recipient_keys) {
+          const keyEntry = msg.recipient_keys.find(k => k.recipient_id === currentUserId);
+          if (!keyEntry || decryptedMediaURLs[msg.id]) continue;
+
+          try {
+            const aesKey = decryptAESKey(keyEntry.encrypted_key, localStorage.getItem(PRIVATE_KEY));
+            const response = await fetch(`${api.defaults.baseURL}/api${msg.media}`);
+            const encryptedBlob = await response.blob();
+            const decryptedBlob = await decryptMediaFile(encryptedBlob, aesKey);
+            const url = URL.createObjectURL(decryptedBlob);
+            setDecryptedMediaURLs(prev => ({ ...prev, [msg.id]: url }));
+          } catch (err) {
+            console.error("Media decryption failed for msg", msg.id, err);
+          }
+        }
+      }
+    };
+    decryptAllMedia();
+  }, [messages]);
+
+
   useEffect(() => {
     let isActive = true;
 
@@ -163,7 +228,10 @@ const GroupChat = ({ selectedGroup, currentUserId }) => {
     encrypted_keys.forEach((key) =>
       formData.append("encrypted_keys", JSON.stringify(key))
     );
-    if (mediaFile) formData.append("media", mediaFile);
+    if (mediaFile) {
+      const encryptedMedia = await encryptMediaFile(mediaFile, aesKey);
+      formData.append("media", new File([encryptedMedia], mediaFile.name));
+    }
 
     try {
       const res = await api.post(
@@ -192,36 +260,28 @@ const GroupChat = ({ selectedGroup, currentUserId }) => {
                 {!isMe && <strong>{msg.sender.username}</strong>}
               </div>
               {msg.content &&
-                (() => {
-                  try {
-                    const keyEntry = msg.recipient_keys.find(
-                      (k) => k.recipient_id === currentUserId
-                    );
-                    if (!keyEntry) return "[No key]";
-                    const aesKey = decryptAESKey(
-                      keyEntry.encrypted_key,
-                      localStorage.getItem(PRIVATE_KEY)
-                    );
-                    return <div>{decryptWithAES(msg.content, aesKey)}</div>;
-                  } catch {
-                    return <div>[Encrypted]</div>;
-                  }
-                })()}
+              (() => {
+                try {
+                  const keyEntry = msg.recipient_keys.find(
+                    (k) => k.recipient_id === currentUserId
+                  );
+                  if (!keyEntry) return "[No key]";
+                  const aesKey = decryptAESKey(
+                    keyEntry.encrypted_key,
+                    localStorage.getItem(PRIVATE_KEY)
+                  );
+                  return <div>{decryptWithAES(msg.content, aesKey)}</div>;
+                } catch {
+                  return <div>[Encrypted]</div>;
+                }
+              })()}
 
-              {msg.media && (
-                <div className="message-media">
-                  {msg.media.endsWith(".mp4") ? (
-                    <video
-                      src={`${api.defaults.baseURL}/api${msg.media}`}
-                      controls
-                    />
-                  ) : (
-                    <img
-                      src={`${api.defaults.baseURL}/api${msg.media}`}
-                      alt="media"
-                    />
-                  )}
-                </div>
+              {msg.media && decryptedMediaURLs[msg.id] && (
+                msg.media.endsWith(".mp4") ? (
+                  <video src={decryptedMediaURLs[msg.id]} controls style={{ maxWidth: "300px" }} />
+                ) : (
+                  <img src={decryptedMediaURLs[msg.id]} alt="media" style={{ maxWidth: "300px" }} />
+                )
               )}
               <div className="chat-meta">
                 <small>{formatTime(msg.created_at)}</small>

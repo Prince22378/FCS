@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from .models import Listing, Order, Withdrawal, CartItem, SellerProfile
+from .models import Listing, Order, Withdrawal, UserReport, CartItem, SellerProfile
 
 
 
@@ -560,3 +560,20 @@ class OrderBuyerSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderBuyer
         fields = ['id', 'buyer', 'status', 'created_at', 'subtotal', 'shipping', 'total', 'items', 'address']
+
+class UserReportSerializer(serializers.ModelSerializer):
+    reporter_username = serializers.CharField(source="reporter.username", read_only=True)
+    reported_username = serializers.CharField(source="reported_user.username", read_only=True)
+
+    reporter = serializers.PrimaryKeyRelatedField(read_only=True)
+    reported_user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = UserReport
+        fields = [
+            "id",
+            "reporter", "reporter_username",
+            "reported_user", "reported_username",
+            "reason", "custom_reason", "timestamp",
+            "status"
+        ]

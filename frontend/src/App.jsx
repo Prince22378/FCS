@@ -19,6 +19,7 @@ import EditProfile from "./pages/EditProfile.jsx";
 import FriendPage from './pages/FriendPage';
 import ChatroomPage from "./pages/ChatRoomPage.jsx";
 import ReportsLogs from "./pages/ReportsLogs";
+import UserManagement from "./pages/UserManagement.jsx";
 import Marketplace from './pages/Marketplace.jsx';
 import BuyerMarketplace from './pages/BuyerMarketplace.jsx';
 import SellerDashboard from './pages/SellerDashboard.jsx';
@@ -106,6 +107,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/user_management"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/"
           element={

@@ -20,7 +20,6 @@ const ReportsLogs = () => {
     api.get("/api/admin/reports/") // Your endpoint for fetching reports
       .then((response) => {
         // Filter reports into pending, resolved, and taken_down
-        console.log(response.data);
         // setReports(response.data);
         const activeReports = response.data.filter(report => report.status === "pending");
         const resolvedReports = response.data.filter(report => report.status === "resolved");
@@ -31,7 +30,6 @@ const ReportsLogs = () => {
         setResolvedReports(resolvedReports); // Set resolved reports
         setTakedownReports(takedownReports); // Set taken down reports
         setLoading(false);
-        console.log(activeReports);
       })
       .catch((error) => {
         console.error("Error fetching reports:", error);
@@ -116,7 +114,7 @@ const ReportsLogs = () => {
                       <div>
                         <strong>Reported Post:</strong>
                         <br />
-                        <em>{report.post.caption}</em>
+                        <em>{report.post ? report.post.caption : "Post deleted or unavailable"}</em>
                         <br />
                         <strong>Reported by:</strong> {report.user.username}
                         <br />
