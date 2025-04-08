@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from .models import Listing, Order, Withdrawal
+from .models import Listing, Order, Withdrawal, CartItem, SellerProfile
 
 
 
@@ -340,7 +340,7 @@ class ListingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'price', 
             'category', 'status', 'thumbnail', 'thumbnail_url',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'stock'  # Added stock here
         ]
         read_only_fields = ['seller', 'created_at', 'updated_at']
     
@@ -378,12 +378,35 @@ class WithdrawalSerializer(serializers.ModelSerializer):
         fields = ['id', 'amount', 'payment_method', 'status', 'created_at']
         read_only_fields = ['status', 'created_at']
 
+class CartItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.title', read_only=True)
+    price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'product_name', 'price', 'image', 'quantity']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.product.thumbnail:
+            return request.build_absolute_uri(obj.product.thumbnail.url)
+        return None
+
+
 
 
 # buyer
 from .models import (
     Listing, Order, Withdrawal, BuyerProfile, Address, PaymentMethod, OrderBuyer, OrderItem, Wishlist, ReturnRequest, Transaction, Invoice, OrderStatusUpdate, Product
 )
+
+class SellerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SellerProfile
+        fields = ['upi_id', 'wallet_balance', 'total_earnings', 'created_at']
+        read_only_fields = ['wallet_balance', 'total_earnings', 'created_at']
+
 
 class BuyerProfileSerializer(serializers.ModelSerializer):
     class Meta:

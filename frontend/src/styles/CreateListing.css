@@ -104,3 +104,17 @@
     background-color: #93c5fd;
     cursor: not-allowed;
 }
+
+.create-listing {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    overflow-y: auto; /* Allows vertical scroll */
+    max-height: 100vh; /* Prevents content from spilling out of viewport */
+}
+
+/* Optional: Make sure the parent (body or root) supports scrolling */
+body, html {
+    height: 100%;
+    overflow: auto;
+}

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from "react";
+import React, { useState } from "react";  // <-- Added useState import here
 import {
   BrowserRouter,
   Routes,
@@ -36,6 +36,10 @@ import SavedAddresses from "./components/buyer/SavedAddresses.jsx";
 import TrackOrder from "./components/buyer/TrackOrder.jsx"
 import Wishlist from "./components/buyer/Wishlist.jsx"
 import Products from './components/buyer/Products';
+import Cart from './components/buyer/Cart.jsx'
+import BuyerProfile from './components/buyer/BuyerProfile';
+import ProductDetail from "./components/buyer/ProductDetail.jsx";
+import Checkout from './components/buyer/Checkout';
 
 function Logout() {
   localStorage.clear();
@@ -55,9 +59,36 @@ const NavbarWrapper = () => {
 };
 
 function App() {
+  const [cartItems, setCartItems] = useState([]);
+
+  const updateQuantity = (id, newQuantity) => {
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, quantity: Math.max(1, newQuantity) } : item
+      )
+    );
+  };
+
+  const removeItem = (id) => {
+    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  };
+
+  const addToCart = (product) => {
+    setCartItems(prevItems => {
+      const existingItem = prevItems.find(item => item.id === product.id);
+      if (existingItem) {
+        return prevItems.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prevItems, { ...product, quantity: 1 }];
+    });
+  };
+
   return (
     <BrowserRouter>
-      {/* <NavbarWrapper /> */}
       <Routes>
         <Route
           path="/admin-dashboard"
@@ -150,16 +181,30 @@ function App() {
           }
         />
 
-        {/* Buyer routes - require verification */}
         <Route
           path="/buyer"
           element={
             <VerifiedRoute>
-              <BuyerMarketplace />
+              <BuyerMarketplace
+                cartItems={cartItems}
+                updateQuantity={updateQuantity}
+                removeItem={removeItem}
+              />
             </VerifiedRoute>
           }
         >
           <Route path="orders" element={<RecentOrders />} />
+          <Route
+            path="cart"
+            element={
+              <Cart
+                cartItems={cartItems}
+                updateQuantity={updateQuantity}
+                removeItem={removeItem}
+              />
+            }
+          />
+          <Route path="checkout" element={<Checkout />} />
           <Route path="track" element={<TrackOrder />} />
           <Route path="history" element={<OrderHistory />} />
           <Route path="returns" element={<ReturnsRefunds />} />
@@ -167,12 +212,41 @@ function App() {
           <Route path="payments" element={<PaymentMethods />} />
           <Route path="invoices" element={<InvoicesBilling />} />
           <Route path="wishlist" element={<Wishlist />} />
-          <Route path="products" element={<Products />} />
+          <Route path="profile" element={<BuyerProfile />} />
+
+          <Route
+            path="products"
+            element={
+              <Products
+                addToCart={addToCart}
+                cartItems={cartItems}
+              />
+            }
+          />
+          {/* 🔥 New nested route for product detail */}
+          <Route path="products/:id" element={<ProductDetail />} />
         </Route>
 
+
         {/* Public marketplace routes */}
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/products" element={<Products />} />
+        <Route
+          path="/marketplace"
+          element={
+            <Marketplace
+              addToCart={addToCart}
+              cartItems={cartItems}
+            />
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <Products
+              addToCart={addToCart}
+              cartItems={cartItems}
+            />
+          }
+        />
 
         {/* Auth routes */}
         <Route path="/login" element={<Login />} />

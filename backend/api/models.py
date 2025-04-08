@@ -41,6 +41,8 @@ class Profile(models.Model):
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         profile = Profile.objects.create(user=instance)
+        BuyerProfile.objects.create(user=instance)
+        SellerProfile.objects.create(user=instance)
         # Set full_name to the user's username
         profile.full_name = instance.username
         profile.save()
@@ -180,21 +182,26 @@ class Listing(models.Model):
         ('draft', 'Draft'),
         ('active', 'Active'),
         ('sold', 'Sold'),
-        ('archived', 'Archived')  # Added for completed listings
+        ('archived', 'Archived')
     ]
 
     seller = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
         related_name='listings',
-        db_index=True  # Added for better query performance
+        db_index=True
     )
     title = models.CharField(max_length=100)
     description = models.TextField()
     price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        validators=[MinValueValidator(0.01)]  # Ensure positive price
+        validators=[MinValueValidator(0.01)]
+    )
+    stock = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        help_text="Number of items available in stock"
     )
     status = models.CharField(
         max_length=10, 
@@ -203,97 +210,39 @@ class Listing(models.Model):
         db_index=True
     )
     thumbnail = models.ImageField(
-        upload_to='listings/%Y/%m/%d/',  # Organized by date
+        upload_to='listings/%Y/%m/%d/',
         null=True, 
         blank=True,
-        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # Track modifications
-    category = models.CharField(  # Added for better organization
+    updated_at = models.DateTimeField(auto_now=True)
+    category = models.CharField(
         max_length=50,
         blank=True,
         null=True
     )
 
     class Meta:
-        ordering = ['-created_at']  # Newest first by default
+        ordering = ['-created_at']
         verbose_name_plural = "Listings"
         indexes = [
-            models.Index(fields=['title', 'status']),  # Better search performance
+            models.Index(fields=['title', 'status']),
         ]
 
     def __str__(self):
         return f"{self.title} (${self.price}) by {self.seller.username}"
 
     def clean(self):
-        """Additional validation"""
         if self.price < 0:
             raise ValidationError("Price cannot be negative")
-            
+
     @property
     def thumbnail_url(self):
-        """Easy access to thumbnail URL"""
         if self.thumbnail and hasattr(self.thumbnail, 'url'):
             return self.thumbnail.url
-        return '/static/default_listing.jpg'  # Default image
-    
+        return '/static/default_listing.jpg'
 
-# class Order(models.Model):
-#     STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('completed', 'Completed'),
-#         ('cancelled', 'Cancelled'),
-#         ('shipped', 'Shipped'),
-#     ]
-
-#     buyer = models.ForeignKey(
-#         User, 
-#         on_delete=models.CASCADE, 
-#         related_name='buyer_orders'
-#     )
-#     seller = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='seller_orders'
-#     )
-#     listing = models.ForeignKey(
-#         Listing,
-#         on_delete=models.CASCADE,
-#         related_name='orders'
-#     )
-#     status = models.CharField(
-#         max_length=10,
-#         choices=STATUS_CHOICES,
-#         default='pending'
-#     )
-#     quantity = models.PositiveIntegerField(default=1)
-#     price_at_purchase = models.DecimalField(
-#         max_digits=10,
-#         decimal_places=2
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     shipping_address = models.TextField(blank=True)
-#     payment_method = models.CharField(max_length=50, blank=True)
-
-#     class Meta:
-#         ordering = ['-created_at']
-#         indexes = [
-#             models.Index(fields=['buyer']),
-#             models.Index(fields=['seller']),
-#             models.Index(fields=['status']),
-#         ]
-
-#     def save(self, *args, **kwargs):
-#         if not self.price_at_purchase:
-#             self.price_at_purchase = self.listing.price
-#         if not self.seller_id:
-#             self.seller = self.listing.seller
-#         super().save(*args, **kwargs)
-
-#     def __str__(self):
-#         return f"Order #{self.id} - {self.listing.title}"
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -331,162 +280,17 @@ class Withdrawal(models.Model):
     def __str__(self):
         return f"Withdrawal #{self.id} - {self.seller.username}"
 
+class SellerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='seller_profile')
+    upi_id = models.CharField(max_length=100, blank=True, null=True)
+    wallet_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    rating = models.FloatField(default=0.0)  # optional
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-# class Listing(models.Model):
-#     STATUS_CHOICES = [
-#         ('draft', 'Draft'),
-#         ('active', 'Active'),
-#         ('sold', 'Sold'),
-#         ('archived', 'Archived')  # Added for completed listings
-#     ]
-
-#     seller = models.ForeignKey(
-#         User, 
-#         on_delete=models.CASCADE, 
-#         related_name='listings',
-#         db_index=True  # Added for better query performance
-#     )
-#     title = models.CharField(max_length=100)
-#     description = models.TextField()
-#     price = models.DecimalField(
-#         max_digits=10, 
-#         decimal_places=2,
-#         validators=[MinValueValidator(0.01)]  # Ensure positive price
-#     )
-#     status = models.CharField(
-#         max_length=10, 
-#         choices=STATUS_CHOICES, 
-#         default='draft',
-#         db_index=True
-#     )
-#     thumbnail = models.ImageField(
-#         upload_to='listings/%Y/%m/%d/',  # Organized by date
-#         null=True, 
-#         blank=True,
-#         validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]  # Validate image types
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)  # Track modifications
-#     category = models.CharField(  # Added for better organization
-#         max_length=50,
-#         blank=True,
-#         null=True
-#     )
-
-#     class Meta:
-#         ordering = ['-created_at']  # Newest first by default
-#         verbose_name_plural = "Listings"
-#         indexes = [
-#             models.Index(fields=['title', 'status']),  # Better search performance
-#         ]
-
-#     def __str__(self):
-#         return f"{self.title} (${self.price}) by {self.seller.username}"
-
-#     def clean(self):
-#         """Additional validation"""
-#         if self.price < 0:
-#             raise ValidationError("Price cannot be negative")
-            
-#     @property
-#     def thumbnail_url(self):
-#         """Easy access to thumbnail URL"""
-#         if self.thumbnail and hasattr(self.thumbnail, 'url'):
-#             return self.thumbnail.url
-#         return '/static/default_listing.jpg'  # Default image
-    
-
-# class Order(models.Model):
-#     STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('completed', 'Completed'),
-#         ('cancelled', 'Cancelled'),
-#         ('shipped', 'Shipped'),
-#     ]
-
-#     buyer = models.ForeignKey(
-#         User, 
-#         on_delete=models.CASCADE, 
-#         related_name='buyer_orders'
-#     )
-#     seller = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='seller_orders'
-#     )
-#     listing = models.ForeignKey(
-#         Listing,
-#         on_delete=models.CASCADE,
-#         related_name='orders'
-#     )
-#     status = models.CharField(
-#         max_length=10,
-#         choices=STATUS_CHOICES,
-#         default='pending'
-#     )
-#     quantity = models.PositiveIntegerField(default=1)
-#     price_at_purchase = models.DecimalField(
-#         max_digits=10,
-#         decimal_places=2
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     shipping_address = models.TextField(blank=True)
-#     payment_method = models.CharField(max_length=50, blank=True)
-
-#     class Meta:
-#         ordering = ['-created_at']
-#         indexes = [
-#             models.Index(fields=['buyer']),
-#             models.Index(fields=['seller']),
-#             models.Index(fields=['status']),
-#         ]
-
-#     def save(self, *args, **kwargs):
-#         if not self.price_at_purchase:
-#             self.price_at_purchase = self.listing.price
-#         if not self.seller_id:
-#             self.seller = self.listing.seller
-#         super().save(*args, **kwargs)
-
-#     def __str__(self):
-#         return f"Order #{self.id} - {self.listing.title}"
-
-# class Order(models.Model):
-#     STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('completed', 'Completed'),
-#     ]
-    
-#     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
-#     listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
-#     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"Order #{self.id}"
-    
-# class Withdrawal(models.Model):
-#     STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('processed', 'Processed'),
-#         ('rejected', 'Rejected'),
-#     ]
-    
-#     PAYMENT_METHODS = [
-#         ('bank_transfer', 'Bank Transfer'),
-#         ('upi', 'UPI'),
-#         ('paypal', 'PayPal'),
-#     ]
-    
-#     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
-#     amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
-#     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-#     created_at = models.DateTimeField(auto_now_add=True)
-    
-#     def __str__(self):
-#         return f"Withdrawal #{self.id} - {self.seller.username}"
+    def __str__(self):
+        return f"{self.user.username}'s Seller Profile"
 
 
 # ========================
@@ -551,34 +355,7 @@ class PaymentMethod(models.Model):
             return f"Card: ****{self.card_last4} ({self.card_brand})"
         return f"{self.get_type_display()}"
 
-# class Listing(models.Model):
-#     STATUS_CHOICES = [
-#         ('DRAFT', 'Draft'),
-#         ('ACTIVE', 'Active'),
-#         ('SOLD', 'Sold'),
-#         ('ARCHIVED', 'Archived'),
-#     ]
 
-#     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
-#     title = models.CharField(max_length=100)
-#     description = models.TextField()
-#     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
-#     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='DRAFT')
-#     thumbnail = models.ImageField(upload_to='listings/', null=True, blank=True)
-#     stock = models.PositiveIntegerField(default=1)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         ordering = ['-created_at']
-#         indexes = [models.Index(fields=['status', 'price'])]
-
-#     def clean(self):
-#         if self.price < 0:
-#             raise ValidationError("Price cannot be negative")
-
-#     def __str__(self):
-#         return f"{self.title} (₹{self.price})"
 
 class OrderBuyer(models.Model):
     STATUS_CHOICES = [
@@ -672,6 +449,20 @@ class OrderStatusUpdate(models.Model):
     def __str__(self):
         return f"Status update: {self.old_status} → {self.new_status}"
 
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey('Listing', on_delete=models.CASCADE)  # Changed from 'Product'
+    quantity = models.PositiveIntegerField(default=1)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.title} ({self.user.username})"
+
+
+
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists')
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
@@ -704,24 +495,3 @@ class ReturnRequest(models.Model):
 
     def __str__(self):
         return f"Return request for Order #{self.order.order_number}"
-
-# class Withdrawal(models.Model):
-#     STATUS_CHOICES = [
-#         ('PENDING', 'Pending'),
-#         ('PROCESSED', 'Processed'),
-#         ('REJECTED', 'Rejected'),
-#     ]
-
-#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
-#     amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT)
-#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-#     reference_id = models.CharField(max_length=100, unique=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     processed_at = models.DateTimeField(null=True, blank=True)
-
-#     class Meta:
-#         ordering = ['-created_at']
-
-#     def __str__(self):
-#         return f"Withdrawal #{self.reference_id}"

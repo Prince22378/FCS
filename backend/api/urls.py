@@ -24,6 +24,7 @@ from .views import (
     VerifyPaymentOTPView
 )
 
+from .views import SellerProfileView
 
 from .views import (
     BuyerProfileView, AddressListCreateView, AddressDetailView, SetDefaultAddressView,
@@ -35,6 +36,7 @@ from .views import (
 )
 
 from .views import PublicProductListView
+
 
 from .views import send_payment_otp, verify_payment_otp, confirm_payment
 
@@ -95,8 +97,7 @@ urlpatterns = [
     path('public-profile/<int:user_id>/', views.public_profile_view),
 
     #P2P
-    path('seller/', views.SellerListingsAPI.as_view(), name='seller-listings'),
-    path('listings/<int:pk>/', views.ListingDetailAPI.as_view(), name='listing-detail'),
+    path('seller/listings/<int:pk>/', views.ListingDetailAPI.as_view(), name='seller-listing-detail'),
     path('marketplace/', views.MarketplaceListAPI.as_view(), name='marketplace-list'),
     path('marketplace/buyer/', views.BuyerMarketplaceAPI.as_view(), name='buyer-marketplace'),
     path('seller/dashboard/', views.SellerDashboardAPI.as_view()),
@@ -114,6 +115,9 @@ urlpatterns = [
 
     # Buyer Profile
     path('profile/', BuyerProfileView.as_view(), name='buyer-profile'),
+    # Buyer View Individual Product
+path('buyer/products/<int:pk>/', views.PublicListingDetailAPI.as_view(), name='buyer-product-detail'),
+
     
     # Addresses
     path('addresses/', AddressListCreateView.as_view(), name='address-list'),
@@ -147,21 +151,33 @@ urlpatterns = [
     path('transactions/', TransactionListView.as_view(), name='transaction-list'),
     path('invoices/', InvoiceListView.as_view(), name='invoice-list'),
     path('invoices/<int:pk>/download/', DownloadInvoiceView.as_view(), name='download-invoice'),
+
+    path('seller/listings/create/', CreateListingAPI.as_view(), name='create-listing'),
+    path('seller/listings/', SellerListingsAPI.as_view(), name='seller-listings'),
+    path('buyer/products/', PublicProductListView.as_view(), name='buyer-products'),
+    path('listings/<int:pk>/', views.PublicListingDetailAPI.as_view(), name='listing-detail'),
+
     
     # Dashboard Stats
     path('stats/', BuyerDashboardStatsView.as_view(), name='buyer-stats'),
-    path('api/listings/', PublicProductListView.as_view(), name='public-listings'),
+    path('api/seller-profile/', SellerProfileView.as_view(), name='seller-profile'),
 
     path('api/send-payment-otp/', send_payment_otp),
     path('api/verify-payment-otp/', verify_payment_otp),
     path('api/confirm-payment/', confirm_payment),
 
-    path('cart/', CartView.as_view(), name='cart'),
-    path('checkout/', CheckoutView.as_view(), name='checkout'),
+    # path('api/cart/', CartView.as_view(), name='cart'),
+    path('cart/', CartView.as_view(), name='cart'),              # GET, POST
+    path('cart/<int:pk>/', CartView.as_view(), name='cart-item'), 
+
+    # path('cart/<int:pk>/', CartView.as_view(), name='cart-item'),
+    path('buyer/checkout/', CheckoutView.as_view(), name='checkout'),
+
     path('orders/<int:id>/', OrderDetailsView.as_view(), name='order-details'),
     path('addresses/', AddressView.as_view(), name='address-list'),
-    path('send-payment-otp/', SendPaymentOTPView.as_view(), name='send-payment-otp'),
-    path('verify-payment-otp/', VerifyPaymentOTPView.as_view(), name='verify-payment-otp'),
+    path('send-payment-otp/', SendPaymentOTPView.as_view(), name='send_payment_otp'),
+path('verify-payment-otp/', VerifyPaymentOTPView.as_view(), name='verify_payment_otp'),
+
 ]
 
 

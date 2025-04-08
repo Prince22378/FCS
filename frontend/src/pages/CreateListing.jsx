@@ -11,11 +11,11 @@ const CreateListing = () => {
         price: '',
         category: '',
         stock: '',
-        status: 'draft',
-        images: []
+        status: 'active', // Default to active to appear on buyer's page
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [imagePreviews, setImagePreviews] = useState([]);
+    const [imagePreview, setImagePreview] = useState(null); // Changed to single image
+    const [imageFile, setImageFile] = useState(null); // Store the single image file
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -23,25 +23,16 @@ const CreateListing = () => {
     };
 
     const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-        const previews = files.map(file => URL.createObjectURL(file));
-        setImagePreviews(prev => [...prev, ...previews]);
-
-        // In a real app, you would upload to a server here
-        setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, ...files]
-        }));
+        const file = e.target.files[0]; // Get only the first file
+        if (file) {
+            setImagePreview(URL.createObjectURL(file));
+            setImageFile(file);
+        }
     };
 
-    const removeImage = (index) => {
-        const newPreviews = [...imagePreviews];
-        newPreviews.splice(index, 1);
-        setImagePreviews(newPreviews);
-
-        const newImages = [...formData.images];
-        newImages.splice(index, 1);
-        setFormData(prev => ({ ...prev, images: newImages }));
+    const removeImage = () => {
+        setImagePreview(null);
+        setImageFile(null);
     };
 
     const handleSubmit = async (e) => {
@@ -50,17 +41,18 @@ const CreateListing = () => {
 
         try {
             const formDataToSend = new FormData();
+            
+            // Append all form fields
             Object.entries(formData).forEach(([key, value]) => {
-                if (key === 'images') {
-                    formData.images.forEach(image => {
-                        formDataToSend.append('images', image);
-                    });
-                } else {
-                    formDataToSend.append(key, value);
-                }
+                formDataToSend.append(key, value);
             });
+            
+            // Append the single image if it exists
+            if (imageFile) {
+                formDataToSend.append('thumbnail', imageFile);
+            }
 
-            await api.post('/api/seller/listings/', formDataToSend, {
+            await api.post('/api/seller/listings/create/', formDataToSend, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -155,27 +147,24 @@ const CreateListing = () => {
                 </div>
 
                 <div className="form-group">
-                    <label>Images</label>
+                    <label>Product Image</label> {/* Changed label */}
                     <input
                         type="file"
-                        multiple
                         onChange={handleImageUpload}
                         accept="image/*"
                     />
-                    <div className="image-previews">
-                        {imagePreviews.map((preview, index) => (
-                            <div key={index} className="image-preview">
-                                <img src={preview} alt={`Preview ${index}`} />
-                                <button
-                                    type="button"
-                                    onClick={() => removeImage(index)}
-                                    className="remove-image"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+                    {imagePreview && (
+                        <div className="image-preview">
+                            <img src={imagePreview} alt="Preview" />
+                            <button
+                                type="button"
+                                onClick={removeImage}
+                                className="remove-image"
+                            >
+                                × Remove
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <button

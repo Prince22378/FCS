@@ -52,6 +52,8 @@ from .serializer import (
     InvoiceSerializer
 )
 
+from .models import CartItem
+from .serializer import CartItemSerializer
 
 from .serializer import (
     ListingSerializer, 
@@ -697,6 +699,11 @@ class ListingDetailAPI(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         """Ensures users can only access their own listings"""
         return Listing.objects.filter(seller=self.request.user)
+    
+class PublicListingDetailAPI(generics.RetrieveAPIView):
+    queryset = Listing.objects.filter(status='active')  # show only active listings
+    serializer_class = ListingSerializer
+    permission_classes = [permissions.AllowAny]
 
 from .models import Listing, Order
 
@@ -736,12 +743,23 @@ class BuyerMarketplaceAPI(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class CreateListingAPI(APIView):
-    """
-    API endpoint for creating new listings
-    """
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         try:
-            serializer = ListingSerializer(data=request.data)
+            # For FormData, we need to use request.POST for regular fields
+            # and request.FILES for files
+            data = {
+                'title': request.POST.get('title'),
+                'description': request.POST.get('description'),
+                'price': request.POST.get('price'),
+                'category': request.POST.get('category'),
+                'stock': request.POST.get('stock'),
+                'status': request.POST.get('status'),
+                'thumbnail': request.FILES.get('thumbnail'),
+            }
+            
+            serializer = ListingSerializer(data=data)
             if serializer.is_valid():
                 serializer.save(seller=request.user)
                 return Response({
@@ -792,27 +810,6 @@ class OrderSerializer(serializers.ModelSerializer):
         return None
     
 
-# class SellerDashboardAPI(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         seller = request.user
-#         listings = Listing.objects.filter(seller=seller)
-#         orders = Order.objects.filter(seller=seller)
-        
-#         return Response({
-#             'stats': {
-#                 'totalSales': orders.filter(status='completed').count(),
-#                 'pendingOrders': orders.filter(status='pending').count(),
-#                 'completedOrders': orders.filter(status='completed').count(),
-#                 'balance': sum(
-#                     order.price_at_purchase * order.quantity 
-#                     for order in orders.filter(status='completed')
-#                 )
-#             },
-#             'listings': ListingSerializer(listings, many=True).data,
-#             'orders': OrderSerializer(orders.order_by('-created_at'), many=True).data
-#         })
 
 class SellerListingsAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -820,10 +817,7 @@ class SellerListingsAPI(APIView):
     def get(self, request):
         listings = Listing.objects.filter(seller=request.user)
         serializer = ListingSerializer(listings, many=True)
-        return Response({
-            'success': True,
-            'listings': serializer.data
-        })
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = ListingSerializer(data=request.data)
@@ -1379,48 +1373,149 @@ import random
 User = get_user_model()
 
 class CartView(generics.GenericAPIView):
+    serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        items = CartItem.objects.filter(user=request.user)
+        serializer = self.get_serializer(items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request):
-        # Simulate cart storage in session (or use Redis in production)
-        request.session['cart'] = request.data.get('items', [])
-        return Response({"status": "Cart updated"})
+        product_id = request.data.get('product_id')
+
+        # Validate quantity
+        try:
+            quantity = int(request.data.get('quantity', 1))
+            if quantity <= 0:
+                return Response({"error": "Quantity must be positive"}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, ValueError):
+            return Response({"error": "Invalid quantity"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Listing.objects.filter(status='active').get(id=product_id)
+        except Listing.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        item, created = CartItem.objects.get_or_create(user=request.user, product=product)
+        if not created:
+            item.quantity += quantity
+        else:
+            item.quantity = quantity
+        item.save()
+
+        # Optionally return updated cart
+        items = CartItem.objects.filter(user=request.user)
+        serializer = self.get_serializer(items, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, *args, **kwargs):
+        item_id = kwargs.get('pk')
+
+        # Validate quantity
+        try:
+            quantity = int(request.data.get('quantity'))
+            if quantity <= 0:
+                return Response({"error": "Quantity must be positive"}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, ValueError):
+            return Response({"error": "Invalid quantity"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            item = CartItem.objects.get(id=item_id, user=request.user)
+            item.quantity = quantity
+            item.save()
+            return Response({"message": "Quantity updated"}, status=status.HTTP_200_OK)
+        except CartItem.DoesNotExist:
+            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, *args, **kwargs):
+        item_id = kwargs.get('pk')
+        try:
+            item = CartItem.objects.get(id=item_id, user=request.user)
+            item.delete()
+            return Response({"message": "Item removed"}, status=status.HTTP_200_OK)
+        except CartItem.DoesNotExist:
+            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from decimal import Decimal
+from decimal import Decimal
+from django.db import transaction
 
 class CheckoutView(generics.CreateAPIView):
     serializer_class = OrderBuyerSerializer
+    permission_classes = [IsAuthenticated]
 
     def create(self, request):
-        cart_items = request.session.get('cart', [])
-        if not cart_items:
+        if not request.session.get('otp_verified'):
+            return Response({"error": "Payment OTP not verified."}, status=status.HTTP_403_FORBIDDEN)
+
+        cart_items = CartItem.objects.select_related('product__seller').filter(user=request.user)
+        if not cart_items.exists():
             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Calculate totals
-        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
+        subtotal = sum(item.product.price * item.quantity for item in cart_items)
         shipping = 0 if subtotal > 1000 else 50
         total = subtotal + shipping
 
-        # Create order
-        order = OrderBuyer.objects.create(
-            buyer=request.user,
-            subtotal=subtotal,
-            shipping=shipping,
-            total=total,
-            payment_method=request.data.get('payment_method', 'UPI'),
-            upi_id=request.data.get('upi_id')
-        )
-
-        # Add items
-        for item in cart_items:
-            product = Product.objects.get(id=item['product_id'])
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                quantity=item['quantity'],
-                price=item['price']
+        with transaction.atomic():
+            # Create order
+            order = OrderBuyer.objects.create(
+                buyer=request.user,
+                subtotal=subtotal,
+                shipping=shipping,
+                total=total,
+                payment_method=request.data.get('payment_method', 'UPI'),
+                upi_id=request.data.get('upi_id')
             )
 
-        # Clear cart
-        request.session['cart'] = []
+            for item in cart_items:
+                listing = item.product  # product is Listing
+                quantity = item.quantity
+                seller = listing.seller
+
+                # Ensure enough stock
+                if listing.stock < quantity:
+                    raise serializers.ValidationError(f"Not enough stock for {listing.title}")
+
+                # Decrease stock
+                listing.stock -= quantity
+                if listing.stock == 0:
+                    listing.status = 'sold'
+                listing.save()
+
+                # Credit seller's wallet
+                try:
+                    seller_profile = seller.seller_profile
+                    amount = Decimal(listing.price) * quantity
+                    seller_profile.wallet_balance += amount
+                    seller_profile.total_earnings += amount
+                    seller_profile.save()
+                except SellerProfile.DoesNotExist:
+                    # Optional: handle missing profile
+                    raise serializers.ValidationError(f"Seller profile for {seller.username} not found.")
+
+                # Create order item
+                OrderItem.objects.create(
+                    order=order,
+                    product=listing,
+                    quantity=quantity,
+                    price=listing.price
+                )
+
+            # Clear cart
+            cart_items.delete()
+            request.session['cart'] = []
+            request.session.pop('otp_verified', None)
 
         return Response(OrderBuyerSerializer(order).data, status=status.HTTP_201_CREATED)
+
+
+
 
 class OrderDetailsView(generics.RetrieveAPIView):
     queryset = OrderBuyer.objects.all()
@@ -1436,27 +1531,74 @@ class AddressView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class SendPaymentOTPView(generics.GenericAPIView):
-    def post(self, request):
-        otp = str(random.randint(100000, 999999))
-        request.session['payment_otp'] = otp
+from rest_framework.permissions import IsAuthenticated
 
-        # Send OTP via email (using your existing EMAIL_BACKEND)
+
+from rest_framework.generics import RetrieveUpdateAPIView
+from .models import SellerProfile
+from .serializer import SellerProfileSerializer
+from rest_framework.permissions import IsAuthenticated
+
+class SellerProfileView(RetrieveUpdateAPIView):
+    serializer_class = SellerProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.seller_profile
+
+
+class SendPaymentOTPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        email = user.email
+        now = timezone.now()
+
+        try:
+            otp_record = EmailOTP.objects.get(email=email, purpose='payment')
+            time_since_last_otp = (now - otp_record.created_at).total_seconds()
+            if time_since_last_otp < 30:
+                wait_time = int(30 - time_since_last_otp)
+                return Response({
+                    "error": f"OTP already sent. Please wait {wait_time} more seconds."
+                }, status=429)
+        except EmailOTP.DoesNotExist:
+            pass
+
+        otp = f"{random.randint(100000, 999999)}"
+        EmailOTP.objects.update_or_create(
+            email=email,
+            defaults={'otp': otp, 'created_at': now, 'purpose': 'payment'}
+        )
+
         send_mail(
-            'Payment OTP',
-            f'Your OTP is: {otp}',
-            'meetpalfcs@gmail.com',
-            [request.user.email],
+            subject="Your Payment OTP",
+            message=f"Use this OTP to complete your purchase: {otp}\nValid for 5 minutes.",
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
             fail_silently=False,
         )
-        return Response({"status": "OTP sent"})
+
+        return Response({"message": "Payment OTP sent to your email."})
+
     
-class VerifyPaymentOTPView(generics.GenericAPIView):
+class VerifyPaymentOTPView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        user_otp = request.data.get('otp')
-        stored_otp = request.session.get('payment_otp')
-        
-        if user_otp == stored_otp:
-            del request.session['payment_otp']
-            return Response({"success": True})
-        return Response({"success": False}, status=400)
+        otp = request.data.get('otp')
+        email = request.user.email
+
+        try:
+            record = EmailOTP.objects.get(email=email, purpose='payment')
+            if record.otp != otp:
+                return Response({"error": "Invalid OTP."}, status=400)
+            if record.is_expired():
+                return Response({"error": "OTP has expired."}, status=400)
+            record.delete()  # Optional: OTP used, remove it
+            request.session['otp_verified'] = True
+            return Response({"verified": True})
+        except EmailOTP.DoesNotExist:
+            return Response({"error": "OTP not found."}, status=400)
+

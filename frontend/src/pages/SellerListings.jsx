@@ -13,7 +13,8 @@ const SellerListings = () => {
         const fetchListings = async () => {
             try {
                 const response = await api.get('/api/seller/listings/');
-                setListings(response.data.listings);
+                setListings(response.data || []);
+
             } catch (error) {
                 console.error('Error fetching listings:', error);
             } finally {
