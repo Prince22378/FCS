@@ -1,32 +1,28 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
-from .models import Wallet
+from django.contrib.auth import get_user_model
 
-from .models import Transaction, Wallet, SellerProfile
+from .models import Wallet, SellerProfile, BuyerProfile, Profile
 
-@receiver(post_save, sender=Transaction)
-def handle_successful_transaction(sender, instance, created, **kwargs):
-    if created and instance.success:
-        seller = instance.receiver
-        amount = instance.amount
-
-        try:
-            wallet, _ = Wallet.objects.get_or_create(user=seller)
-            wallet.balance += amount
-            wallet.save()
-
-            seller_profile, _ = SellerProfile.objects.get_or_create(user=seller)
-            seller_profile.total_earnings += amount
-            seller_profile.save()
-
-            print(f"[SIGNAL] Seller '{seller.username}' updated: +₹{amount}")
-
-        except Exception as e:
-            print(f"[SIGNAL ERROR] Failed to update seller balance: {e}")
-
+User = get_user_model()
 
 @receiver(post_save, sender=User)
 def create_wallet(sender, instance, created, **kwargs):
     if created:
-        Wallet.objects.create(user=instance, balance=10000.0)
+        Wallet.objects.get_or_create(user=instance, defaults={'balance': 10000.0})
+        print(f"✅ Wallet created for {instance.email}")
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        profile, _ = Profile.objects.get_or_create(user=instance)
+        BuyerProfile.objects.get_or_create(user=instance)
+        SellerProfile.objects.get_or_create(user=instance)
+
+        if not profile.full_name:
+            profile.full_name = instance.username
+            profile.save()
+
+        print(f"✅ Profiles created for {instance.email}")
+

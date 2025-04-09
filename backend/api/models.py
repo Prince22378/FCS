@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.core.validators import MinValueValidator, FileExtensionValidator
 from django.core.exceptions import ValidationError
+from django.dispatch import receiver
 
 
 class User(AbstractUser):
@@ -37,7 +38,7 @@ class Profile(models.Model):
         return self.full_name
     
     
-
+@receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         profile = Profile.objects.create(user=instance)
@@ -47,7 +48,7 @@ def create_user_profile(sender, instance, created, **kwargs):
         profile.full_name = instance.username
         profile.save()
 
-
+@receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 

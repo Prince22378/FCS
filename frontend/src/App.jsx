@@ -223,7 +223,6 @@ function App() {
           <Route path="invoices" element={<InvoicesBilling />} />
           <Route path="wishlist" element={<Wishlist />} />
           <Route path="profile" element={<BuyerProfile />} />
-
           <Route
             path="products"
             element={
@@ -233,30 +232,33 @@ function App() {
               />
             }
           />
-          {/* 🔥 New nested route for product detail */}
           <Route path="products/:id" element={<ProductDetail />} />
         </Route>
 
-
-        {/* Public marketplace routes */}
+        {/* 🛡️ Make public marketplace routes verified as well */}
         <Route
           path="/marketplace"
           element={
-            <Marketplace
-              addToCart={addToCart}
-              cartItems={cartItems}
-            />
+            <VerifiedRoute>
+              <Marketplace
+                addToCart={addToCart}
+                cartItems={cartItems}
+              />
+            </VerifiedRoute>
           }
         />
         <Route
           path="/products"
           element={
-            <Products
-              addToCart={addToCart}
-              cartItems={cartItems}
-            />
+            <VerifiedRoute>
+              <Products
+                addToCart={addToCart}
+                cartItems={cartItems}
+              />
+            </VerifiedRoute>
           }
         />
+
 
         {/* Auth routes */}
         <Route path="/login" element={<Login />} />
